@@ -17,7 +17,7 @@
 | Windows (win32)             | Yes            | Windows 7 (Windows NT 6.1) |
 | macOS (Darwin)              | Yes            | macOS El Capitan (10.11)   |
 | Linux (including Chrome OS) | Yes            | Variable                   |
-| Others • Autres             | Not officially | -                          |
+| Others                      | Not officially | -                          |
 
 ---
 

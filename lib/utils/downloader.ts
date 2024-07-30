@@ -12,47 +12,75 @@ import fetch from 'node-fetch'
 import { EventEmitter } from 'events'
 
 export default class Downloader extends EventEmitter {
-  private files: File[]
-  private size: number
-  private dest: string
-  private downloaded: { amount: number; size: number }
-  private errors: number
-  private speed: number
-  private eta: number
-  private history: { size: number; time: number }[]
+  private size: number = 0
+  private dest: string = ''
+  private downloaded: { amount: number; size: number } = { amount: 0, size: 0 }
+  private errors: number = 0
+  private speed: number = 0
+  private eta: number = 0
+  private history: { size: number; time: number }[] = []
 
-  constructor(files: File[], dest: string) {
+  private browsed: { name: string; path: string; sha1: string }[] = []
+
+  /**
+   * @param dest Destination folder
+   */
+  constructor(dest: string) {
     super()
-
-    this.files = files
-    this.dest = dest
-
-    this.size = files.reduce((acc, curr) => acc + (curr.size || 0), 0)
-    this.downloaded = { amount: 0, size: 0 }
-    this.errors = 0
-    this.speed = 0
-    this.eta = 0
-    this.history = []
+    this.dest = path.join(dest)
   }
 
-  async download() {
-    this.files.forEach((file, i) => {
+  /**
+   * @param files List of files to download
+   */
+  async download(files: File[]) {
+    let filesToDownload: File[] = []
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
       const filePath = path.join(this.dest, file.path, file.name)
       if (file.type === 'FOLDER') {
         if (!fs.existsSync(path.join(this.dest, file.path, file.name))) {
           fs.mkdirSync(path.join(this.dest, file.path, file.name), { recursive: true })
         }
-        this.files.splice(i, 1)
-      } else if (fs.existsSync(filePath) && file.sha1 === this.getHash(filePath)) {
-        this.files.splice(i, 1)
+      } else if (!fs.existsSync(filePath) || file.sha1 !== this.getHash(filePath)) {
+        filesToDownload.push(file)
       }
-    })
+    }
 
-    for (let i = 0; i < 5; i++) this.downloadFile(i)
+    this.size = filesToDownload.reduce((acc, curr) => acc + (curr.size || 0), 0)
+    if (this.size === 0) {
+      this.emit('finish', { downloaded: this.downloaded, errors: this.errors })
+      return
+    }
+
+    const max = filesToDownload.length > 5 ? 5 : filesToDownload.length
+
+    for (let i = 0; i < max; i++) this.downloadFile(filesToDownload, i)
   }
 
-  private async downloadFile(i: number) {
-    const file = this.files[i]
+  /**
+   * @param files List of files to check ('ok' files; files that should be in the destination folder)
+   * @param ignore List of files to ignore (don't delete them)
+   */
+  async clean(files: File[], ignore: string[] = []) {
+    let i = 0
+    this.browsed = []
+    this.browse(this.dest)
+
+    this.browsed.forEach((file) => {
+      if (!files.find((f) => path.join(this.dest, f.path, f.name) === path.join(file.path, file.name)) && !ignore.includes(file.name)) {
+        fs.unlinkSync(path.join(file.path, file.name))
+        i++
+        this.emit('clean', { file: file.name })
+      }
+      // Can't check hash for performance reasons
+    })
+
+    this.emit('cleaned', { amount: i })
+  }
+
+  private async downloadFile(files: File[], i: number) {
+    const file = files[i]
     const dirPath = path.join(this.dest, file.path)
     const filePath = path.join(dirPath, file.name)
 
@@ -70,29 +98,28 @@ export default class Downloader extends EventEmitter {
       }
 
       await new Promise((resolve, reject) => {
-        res.body.pipe(stream)
         res.body.on('data', (chunk) => {
           const now = Date.now()
           this.history.push({ size: chunk.length, time: now })
 
-          while (this.history.length > 0 && now - this.history[0].time > 5000) {
+          while (this.history.length > 0 && now - this.history[0].time > 6000) {
             this.history.shift()
           }
+
+          stream.write(chunk)
+
+          this.downloaded.size += chunk.length
 
           const totalSize = this.history.reduce((acc, curr) => acc + curr.size, 0)
           const elapsedTime = (now - this.history[0].time) / 1000
           this.speed = totalSize / elapsedTime
           this.eta = (this.size - this.downloaded.size) / this.speed
 
-          stream.write(chunk)
-
-          this.downloaded.size += chunk.length
-
           this.emit('progress', {
-            total: { amount: this.files.length, size: this.size },
+            total: { amount: files.length, size: this.size },
             downloaded: this.downloaded,
             speed: this.speed,
-            eta: Math.round(this.eta),
+            eta: Math.floor(this.eta),
             type: file.type
           })
         })
@@ -109,10 +136,10 @@ export default class Downloader extends EventEmitter {
 
         res.body.on('end', (val) => {
           this.downloaded.amount++
-          if (this.downloaded.amount + this.errors === this.files.length) {
+          if (this.downloaded.amount + this.errors === files.length) {
             this.emit('finish', { downloaded: this.downloaded, errors: this.errors })
-          } else if (i + 5 < this.files.length) {
-            this.downloadFile(i + 5)
+          } else if (i + 5 < files.length) {
+            this.downloadFile(files, i + 5)
           }
           stream.close()
           resolve(val)
@@ -121,6 +148,24 @@ export default class Downloader extends EventEmitter {
     } catch (error: any) {
       throw new ClientError('DOWNLOAD_ERROR', `Error while downloading file ${file.name}: ${error}`)
     }
+  }
+
+  private browse(dir: string): void {
+    if (!fs.existsSync(dir)) return
+
+    const files = fs.readdirSync(dir)
+
+    files.forEach((file) => {
+      if (fs.statSync(path.join(dir, file)).isDirectory()) {
+        this.browse(path.join(dir, file))
+      } else {
+        this.browsed.push({
+          name: file,
+          path: `${dir}/`.split('\\').join('/').replace(/^\/+/, ''),
+          sha1: this.getHash(path.join(dir, file))
+        })
+      }
+    })
   }
 
   private getHash(filePath: string) {

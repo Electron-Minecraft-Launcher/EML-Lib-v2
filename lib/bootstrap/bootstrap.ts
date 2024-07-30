@@ -36,7 +36,8 @@ export default class Bootstrap {
   }
 
   /**
-   * Download the latest Bootstrap from the EML AdminTool. This method does not check for updates, it will always download the latest version.
+   * Download the latest Bootstrap from the EML AdminTool. 
+   * This method does not check for updates, it will always download the latest version.
    */
   async download() {
     let res = await fetch(`${this.url}/bootstraps`, { method: 'GET' })
