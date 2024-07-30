@@ -1,0 +1,43 @@
+{
+  "name": "eml-core",
+  "version": "2.0.0-alpha.0",
+  "description": "Create your Electron Minecraft Launcher easily!",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && electron ./test/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Electron-Minecraft-Launcher/EML-Core-v2.git"
+  },
+  "keywords": [
+    "electron",
+    "nodejs",
+    "minecraft",
+    "forge",
+    "launcher",
+    "mods"
+  ],
+  "author": "GoldFrite",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Electron-Minecraft-Launcher/EML-Core-v2/issues"
+  },
+  "homepage": "https://github.com/Electron-Minecraft-Launcher/EML-Core-v2#readme",
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/electron": "^1.6.10",
+    "@types/node-fetch": "^2.6.7",
+    "prettier": "^3.3.1",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@electron/remote": "^2.1.2",
+    "adm-zip": "^0.5.14",
+    "crypto": "^1.0.1",
+    "electron": "^31.0.0",
+    "fs": "^0.0.1-security",
+    "node-fetch": "^2.6.7"
+  }
+}
