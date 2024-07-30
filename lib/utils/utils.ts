@@ -3,7 +3,7 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { ClientError } from '../../models/errors'
+import { ClientError, ErrorType } from '../../models/errors.model'
 import path from 'path'
 
 class Utils {
@@ -14,13 +14,13 @@ class Utils {
     if (process.platform === 'win32') return 'win'
     if (process.platform === 'darwin') return 'mac'
     if (process.platform === 'linux') return 'lin'
-    throw new ClientError('UNKNOWN_OS', 'Unknown operating system')
+    throw new ClientError(ErrorType.UNKNOWN_OS, 'Unknown operating system')
   }
 
   /**
-   * Get the path to the application data directory, depending on the operating system.
+   * Get the path to the application data folder, depending on the operating system.
    */
-  getAppData() {
+  getAppDataFolder() {
     return this.getOS() === 'win'
       ? process.env.APPDATA + ''
       : this.getOS() === 'mac'
@@ -36,7 +36,14 @@ class Utils {
   getServerFolder(serverId: string) {
     serverId = serverId.replace(/[^a-z0-9]/gi, '_').toLowerCase()
     serverId = this.getOS() === 'mac' ? serverId : `.${serverId}`
-    return path.join(this.getAppData(), serverId)
+    return path.join(this.getAppDataFolder(), serverId)
+  }
+
+  /**
+   * Get the path of the temp folder, depending on the operating system.
+   */
+  getTempFolder() {
+    return this.getOS() === 'win' ? process.env.TEMP + '' : '/tmp'
   }
 }
 

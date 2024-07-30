@@ -3,13 +3,13 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { File } from '../../models/file'
+import { File } from '../../models/file.model'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { ClientError } from '../../models/errors'
+import { ClientError, ErrorType } from '../../models/errors.model'
 import fetch from 'node-fetch'
-import { EventEmitter } from 'events'
+import EventEmitter from '../utils/events'
 
 export default class Downloader extends EventEmitter {
   private size: number = 0
@@ -23,6 +23,7 @@ export default class Downloader extends EventEmitter {
   private browsed: { name: string; path: string; sha1: string }[] = []
 
   /**
+   * You can use `this.forwardEvents()` to forward events to another EventEmitter.
    * @param dest Destination folder
    */
   constructor(dest: string) {
@@ -91,10 +92,10 @@ export default class Downloader extends EventEmitter {
       const stream = fs.createWriteStream(filePath)
 
       if (res.status !== 200) {
-        throw new ClientError('DOWNLOAD_ERROR', `Error while downloading file: ${res.statusText}`)
+        throw new ClientError(ErrorType.DOWNLOAD_ERROR, `Error while downloading file: ${res.statusText}`)
       }
       if (!res.body) {
-        throw new ClientError('DOWNLOAD_ERROR', 'Error while downloading file: No body')
+        throw new ClientError(ErrorType.DOWNLOAD_ERROR, 'Error while downloading file: No body')
       }
 
       await new Promise((resolve, reject) => {
@@ -113,7 +114,7 @@ export default class Downloader extends EventEmitter {
           const totalSize = this.history.reduce((acc, curr) => acc + curr.size, 0)
           const elapsedTime = (now - this.history[0].time) / 1000
           this.speed = totalSize / elapsedTime
-          this.eta = (this.size - this.downloaded.size) / this.speed
+          this.eta = (this.size - this.downloaded.size) / this.speed // TODO Fix ETA
 
           this.emit('progress', {
             total: { amount: files.length, size: this.size },
@@ -146,7 +147,7 @@ export default class Downloader extends EventEmitter {
         })
       })
     } catch (error: any) {
-      throw new ClientError('DOWNLOAD_ERROR', `Error while downloading file ${file.name}: ${error}`)
+      throw new ClientError(ErrorType.DOWNLOAD_ERROR, `Error while downloading file ${file.name}: ${error}`)
     }
   }
 
@@ -173,7 +174,7 @@ export default class Downloader extends EventEmitter {
       const fileHash = fs.readFileSync(filePath)
       return crypto.createHash('sha1').update(fileHash).digest('hex')
     } catch (err) {
-      throw new ClientError('DOWNLOAD_ERROR', `Error while getting hash of the file ${filePath}: ${err}`)
+      throw new ClientError(ErrorType.HASH_ERROR, `Error while getting hash of the file ${filePath}: ${err}`)
     }
   }
 }

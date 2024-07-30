@@ -4,6 +4,7 @@
  */
 
 import * as net from 'net'
+import { Status as Status_ } from '../../models/status.model'
 
 export default class Status {
   private ip: string
@@ -19,9 +20,9 @@ export default class Status {
     this.port = port
   }
 
-  async getStatus() {
+  async getStatus(): Promise<Status_> {
     return new Promise((resolve) => {
-      let start = +(new Date())
+      let start = +new Date()
       let client = net.connect(this.port, this.ip, () => {
         client.write(Buffer.from([0xfe, 0x01]))
       })
@@ -30,24 +31,24 @@ export default class Status {
         if (data != null) {
           let infos = data.toString().split('\x00\x00\x00')
           resolve({
-            error: false,
-            ms: Math.round(+(new Date()) - start),
+            success: true,
+            ms: Math.round(+new Date() - start),
             version: infos[2].replace(/\u0000/g, ''),
             nameServer: infos[3].replace(/\u0000/g, ''),
-            playersConnect: infos[4].replace(/\u0000/g, ''),
-            playersMax: infos[5].replace(/\u0000/g, '')
-          })
+            playersConnect: +infos[4].replace(/\u0000/g, ''),
+            playersMax: +infos[5].replace(/\u0000/g, '')
+          } as Status_)
         }
         client.end()
       })
 
       client.on('timeout', () => {
-        resolve({ error: true, message: 'Timed out' })
+        resolve({ success: false, message: 'Timed out' } as Status_)
         client.end()
       })
 
       client.on('err', (err) => {
-        resolve({ error: true, message: err })
+        resolve({ success: false, message: err } as Status_)
         console.error(err)
       })
     })

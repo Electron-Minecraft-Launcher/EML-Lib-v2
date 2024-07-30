@@ -3,8 +3,8 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { Account } from '../../models/auth'
-import { ClientError } from '../../models/errors'
+import { Account } from '../../models/auth.model'
+import { ClientError, ErrorType } from '../../models/errors.model'
 
 export default class AzAuth {
   private url: string
@@ -33,11 +33,11 @@ export default class AzAuth {
     }).then((res: any) => res.json())
 
     if (res.status == 'pending' && res.reason == '2fa') {
-      throw new ClientError('TWOFA_CODE_REQUIRED', '2FA code required')
+      throw new ClientError(ErrorType.TWOFA_CODE_REQUIRED, '2FA code required')
     }
 
     if (res.status == 'error') {
-      throw new ClientError('UNKNOWN_ERROR', res.reason)
+      throw new ClientError(ErrorType.AUTH_ERROR, res.reason)
     }
 
     return {
@@ -65,7 +65,7 @@ export default class AzAuth {
     }).then((res: any) => res.json())
 
     if (res.status == 'error') {
-      throw new ClientError('UNKNOWN_ERROR', res.reason)
+      throw new ClientError(ErrorType.AUTH_ERROR, res.reason)
     }
 
     return {

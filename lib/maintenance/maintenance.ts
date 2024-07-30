@@ -3,6 +3,9 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
+import { ClientError, ErrorType } from '../../models/errors.model'
+import { Maintenance as Maintenance_ } from '../../models/maintenance.model'
+
 /**
  * **Attention!** This class only works with the EML AdminTool. Please do not use it without the AdminTool.
  */
@@ -17,13 +20,13 @@ export default class Maintenance {
     this.url = `${url}/api`
   }
 
-  async getMaintenance() {
+  async getMaintenance(): Promise<Maintenance_> {
     let res = await fetch(`${this.url}/maintenance`, { method: 'GET' })
       .then((res) => res.json())
       .catch((err) => {
-        throw new Error(`Error while fetching Maintenance from the EML AdminTool: ${err}`)
+        throw new ClientError(ErrorType.FETCH_ERROR, `Error while fetching Maintenance from the EML AdminTool: ${err}`)
       })
 
-    return res
+    return res.data
   }
 }
