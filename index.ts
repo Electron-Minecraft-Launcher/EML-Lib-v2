@@ -13,9 +13,9 @@
  *
  * ---
  *
- * @version 1.0.0-alpha.0
+ * @version 2.0.0-alpha.0
  * @license MIT — See the `LICENSE` file for more information
- * @copyright Copyright (c) 2022-2024, GoldFrite
+ * @copyright Copyright (c) 2024, GoldFrite
  */
 
 export { default as MicrosoftAuth } from './lib/auth/microsoft'

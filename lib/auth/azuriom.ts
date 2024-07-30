@@ -3,7 +3,6 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-// import fetch from 'node-fetch'
 import { Account } from '../../models/auth'
 import { ClientError } from '../../models/errors'
 

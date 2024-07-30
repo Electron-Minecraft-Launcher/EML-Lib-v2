@@ -1,6 +1,6 @@
 {
   "name": "eml-core",
-  "version": "1.0.0-alpha.0",
+  "version": "2.0.0-alpha.0",
   "description": "Create your Electron Minecraft Launcher easily!",
   "main": "index.js",
   "scripts": {
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@types/adm-zip": "^0.5.5",
     "@types/electron": "^1.6.10",
-    "@types/node-fetch": "^2.6.11",
+    "@types/node-fetch": "^2.6.7",
     "prettier": "^3.3.1",
     "typescript": "^5.4.5"
   },
@@ -38,6 +38,6 @@
     "crypto": "^1.0.1",
     "electron": "^31.0.0",
     "fs": "^0.0.1-security",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^2.6.7"
   }
 }
