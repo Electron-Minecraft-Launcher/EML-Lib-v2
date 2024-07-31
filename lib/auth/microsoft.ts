@@ -6,16 +6,16 @@
 import { BrowserWindow } from 'electron'
 // import fetch from 'node-fetch'
 import MicrosoftAuthGui from './microsoft-gui'
-import { Account } from '../../models/auth.model'
-import { ClientError, ErrorType } from '../../models/errors.model'
+import { Account } from '../../types/auth'
+import { ClientError, ErrorType } from '../../types/errors'
 
 export default class MicrosoftAuth {
   private mainWindow: BrowserWindow
   private clientId: string
 
   /**
-   * @param mainWindow Your electron application's main window (to create a child window for the Microsoft login)
-   * @param clientId [Optional] Your Microsoft application's client ID
+   * @param mainWindow Your electron application's main window (to create a child window for the Microsoft login).
+   * @param clientId [Optional] Your Microsoft application's client ID.
    */
   constructor(mainWindow: BrowserWindow, clientId?: string) {
     if (!mainWindow) throw new Error('No mainWindow given for MicrosoftAuth')
@@ -23,6 +23,10 @@ export default class MicrosoftAuth {
     this.clientId = clientId || '00000000402b5328'
   }
 
+  /**
+   * Authenticate a user with Microsoft. This method will open a child window to login.
+   * @returns The account information.
+   */
   async auth(): Promise<Account> {
     let userCode = await new MicrosoftAuthGui(this.mainWindow, this.clientId).openWindow()
     if (userCode == 'cancel') throw new ClientError(ErrorType.AUTH_CANCELLED, 'User cancelled the login')
@@ -46,13 +50,18 @@ export default class MicrosoftAuth {
     }
   }
 
-  async refresh(user: Account): Promise<Account> {
+  /**
+   * Verify a user with Microsoft. This method will renew the user's token.
+   * @param user The user account to verify.
+   * @returns The renewed account information.
+   */
+  async verify(user: Account): Promise<Account> {
     let res = await fetch('https://login.live.com/oauth20_token.srf', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: `grant_type=refresh_token&client_id=${this.clientId}&refresh_token=${user.refreshToken}`
+      body: `client_id=${this.clientId}&grant_type=refresh_token&refresh_token=${user.refreshToken}`
     })
       .then((res) => res.json())
       .catch((err) => {

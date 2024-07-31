@@ -3,15 +3,16 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { File } from '../../models/file.model'
+import { File } from '../../types/file'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { ClientError, ErrorType } from '../../models/errors.model'
+import { ClientError, ErrorType } from '../../types/errors'
 import fetch from 'node-fetch'
 import EventEmitter from '../utils/events'
+import { DownloaderEvents } from '../../types/events'
 
-export default class Downloader extends EventEmitter {
+export default class Downloader extends EventEmitter<DownloaderEvents>  {
   private size: number = 0
   private dest: string = ''
   private downloaded: { amount: number; size: number } = { amount: 0, size: 0 }
@@ -32,6 +33,7 @@ export default class Downloader extends EventEmitter {
   }
 
   /**
+   * Download files from the list.
    * @param files List of files to download
    */
   async download(files: File[]) {
@@ -60,8 +62,9 @@ export default class Downloader extends EventEmitter {
   }
 
   /**
-   * @param files List of files to check ('ok' files; files that should be in the destination folder)
-   * @param ignore List of files to ignore (don't delete them)
+   * Clean the destination folder by removing files that are not in the list.
+   * @param files List of files to check ('ok' files; files that should be in the destination folder).
+   * @param ignore List of files to ignore (don't delete them).
    */
   async clean(files: File[], ignore: string[] = []) {
     let i = 0

@@ -3,14 +3,14 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { Account } from '../../models/auth.model'
-import { ClientError, ErrorType } from '../../models/errors.model'
+import { Account } from '../../types/auth'
+import { ClientError, ErrorType } from '../../types/errors'
 
 export default class AzAuth {
   private url: string
 
   /**
-   * @param url The URL of your Azuriom website
+   * @param url The URL of your Azuriom website.
    */
   constructor(url: string) {
     if (url) {
@@ -19,6 +19,13 @@ export default class AzAuth {
     } else throw new Error('No URL given for AzAuth')
   }
 
+  /**
+   * Authenticate a user with Azuriom.
+   * @param username The username or email of the user.
+   * @param password The password of the user.
+   * @param twoFACode [Optional] The 2FA code if the user has 2FA enabled.
+   * @returns The account information.
+   */
   async auth(username: string, password: string, twoFACode?: string): Promise<Account> {
     const res = await fetch(`${this.url}/authenticate`, {
       method: 'POST',
@@ -37,7 +44,7 @@ export default class AzAuth {
     }
 
     if (res.status == 'error') {
-      throw new ClientError(ErrorType.AUTH_ERROR, res.reason)
+      throw new ClientError(ErrorType.AUTH_ERROR, `AzAuth authentication failed: ${res.reason}`)
     }
 
     return {
@@ -53,6 +60,11 @@ export default class AzAuth {
     }
   }
 
+  /**
+   * Verify a user with Azuriom. This method will renew the user's token.
+   * @param user The user account to verify.
+   * @returns The renewed account information.
+   */
   async verify(user: Account): Promise<Account> {
     const res = await fetch(`${this.url}/verify`, {
       method: 'POST',
@@ -65,7 +77,7 @@ export default class AzAuth {
     }).then((res: any) => res.json())
 
     if (res.status == 'error') {
-      throw new ClientError(ErrorType.AUTH_ERROR, res.reason)
+      throw new ClientError(ErrorType.AUTH_ERROR, `AzAuth verify failed: ${res.reason}`)
     }
 
     return {
@@ -81,6 +93,10 @@ export default class AzAuth {
     }
   }
 
+  /**
+   * Logout a user from Azuriom.
+   * @param user The account of the user.
+   */
   async logout(user: Account): Promise<void> {
     await fetch(`${this.url}/logout`, {
       method: 'POST',

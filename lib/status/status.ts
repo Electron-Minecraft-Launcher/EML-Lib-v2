@@ -4,15 +4,15 @@
  */
 
 import * as net from 'net'
-import { ServerStatus as ServerStatus_ } from '../../models/status.model'
+import { ServerStatus as ServerStatus_ } from '../../types/status'
 
 export default class ServerStatus {
   private ip: string
   private port: number
 
   /**
-   * @param ip Your Minecraft Server's IP or Host (eg. `'172.65.236.36'` or `'mc.hypixel.net'`)
-   * @param port [Optional: default is `25565`] Your Minecraft Server's main port (eg. 25565)
+   * @param ip Your Minecraft Server's IP or Host (eg. `'172.65.236.36'` or `'mc.hypixel.net'`).
+   * @param port [Optional: default is `25565`] Your Minecraft Server's main port (eg. `25565`).
    */
   constructor(ip: string, port: number = 25565) {
     if (!ip) throw new Error('No IP or host given')
@@ -20,8 +20,12 @@ export default class ServerStatus {
     this.port = port
   }
 
+  /**
+   * Get the status of the Minecraft server.
+   * @returns The Server status.
+   */
   async getStatus(): Promise<ServerStatus_> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       let start = +new Date()
       let client = net.connect(this.port, this.ip, () => {
         client.write(Buffer.from([0xfe, 0x01]))
@@ -43,13 +47,12 @@ export default class ServerStatus {
       })
 
       client.on('timeout', () => {
-        resolve({ success: false, message: 'Timed out' } as ServerStatus_)
+        reject({ success: false, message: 'Timed out' } as ServerStatus_)
         client.end()
       })
 
       client.on('err', (err) => {
-        resolve({ success: false, message: err } as ServerStatus_)
-        console.error(err)
+        reject({ success: false, message: err } as ServerStatus_)
       })
     })
   }
