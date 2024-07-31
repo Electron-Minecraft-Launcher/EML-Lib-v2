@@ -4,9 +4,9 @@
  */
 
 import * as net from 'net'
-import { Status as Status_ } from '../../models/status.model'
+import { ServerStatus as ServerStatus_ } from '../../models/status.model'
 
-export default class Status {
+export default class ServerStatus {
   private ip: string
   private port: number
 
@@ -20,7 +20,7 @@ export default class Status {
     this.port = port
   }
 
-  async getStatus(): Promise<Status_> {
+  async getStatus(): Promise<ServerStatus_> {
     return new Promise((resolve) => {
       let start = +new Date()
       let client = net.connect(this.port, this.ip, () => {
@@ -37,18 +37,18 @@ export default class Status {
             nameServer: infos[3].replace(/\u0000/g, ''),
             playersConnect: +infos[4].replace(/\u0000/g, ''),
             playersMax: +infos[5].replace(/\u0000/g, '')
-          } as Status_)
+          } as ServerStatus_)
         }
         client.end()
       })
 
       client.on('timeout', () => {
-        resolve({ success: false, message: 'Timed out' } as Status_)
+        resolve({ success: false, message: 'Timed out' } as ServerStatus_)
         client.end()
       })
 
       client.on('err', (err) => {
-        resolve({ success: false, message: err } as Status_)
+        resolve({ success: false, message: err } as ServerStatus_)
         console.error(err)
       })
     })

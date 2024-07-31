@@ -1,4 +1,4 @@
-export interface Status {
+export interface ServerStatus {
   success: boolean
   ms?: number
   version?: string
