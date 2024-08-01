@@ -7,8 +7,9 @@ export enum ErrorType {
   DOWNLOAD_ERROR,
   UNKNOWN_OS,
   FETCH_ERROR,
-  EXEC_ERROR,
-  FILE_ERROR
+  NET_ERROR,
+  FILE_ERROR,
+  EXEC_ERROR
 }
 
 export type ErrorCode =
@@ -19,9 +20,10 @@ export type ErrorCode =
   | typeof ErrorType.DOWNLOAD_ERROR
   | typeof ErrorType.HASH_ERROR
   | typeof ErrorType.UNKNOWN_OS
+  | typeof ErrorType.NET_ERROR
   | typeof ErrorType.FETCH_ERROR
-  | typeof ErrorType.EXEC_ERROR
   | typeof ErrorType.FILE_ERROR
+  | typeof ErrorType.EXEC_ERROR
 
 export class ClientError extends Error {
   code: ErrorCode
