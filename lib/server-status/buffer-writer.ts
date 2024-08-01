@@ -1,3 +1,9 @@
+/**
+ * @license MIT
+ * @copyright Copyright (c) 2024, GoldFrite
+ * @copyright Copyright (c) 2020, Nick Krecklow
+ */
+
 export default class BufferWriter {
   writeByte(val: number) {
     const buffer = Buffer.alloc(1)
