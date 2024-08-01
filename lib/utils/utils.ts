@@ -3,12 +3,13 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { ClientError, ErrorType } from '../../models/errors.model'
+import { ClientError, ErrorType } from '../../types/errors'
 import path from 'path'
 
 class Utils {
   /**
    * Get the current operating system code.
+   * @returns The operating system code (`'win'`, `'mac'` or `'lin'`).
    */
   getOS() {
     if (process.platform === 'win32') return 'win'
@@ -19,6 +20,7 @@ class Utils {
 
   /**
    * Get the path to the application data folder, depending on the operating system.
+   * @returns The path to the application data folder (eg. `'C:\Users\user\AppData\Roaming'`).
    */
   getAppDataFolder() {
     return this.getOS() === 'win'
@@ -41,6 +43,7 @@ class Utils {
 
   /**
    * Get the path of the temp folder, depending on the operating system.
+   * @returns The path to the temp folder (eg. `'C:\Users\user\AppData\Local\Temp'`).
    */
   getTempFolder() {
     return this.getOS() === 'win' ? process.env.TEMP + '' : '/tmp'

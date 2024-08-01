@@ -3,8 +3,8 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { ClientError, ErrorType } from '../../models/errors.model'
-import { Background as Background_ } from '../../models/background.model'
+import { ClientError, ErrorType } from '../../types/errors'
+import { Background as Background_ } from '../../types/background'
 
 /**
  * **Attention!** This class only works with the EML AdminTool. Please do not use it without the AdminTool.
@@ -13,7 +13,7 @@ export default class Background {
   private url: string
 
   /**
-   * @param url The URL of your EML AdminTool website
+   * @param url The URL of your EML AdminTool website.
    */
   constructor(url: string) {
     if (!url) throw new Error('No URL given for Background')
@@ -22,6 +22,7 @@ export default class Background {
 
   /**
    * Get the current background for the Launcher.
+   * @returns The current Background object, or `null` if no background is set.
    */
   async getBackground(): Promise<Background_ | null> {
     const res = await fetch(`${this.url}/backgrounds`)

@@ -1,4 +1,4 @@
-import { File } from './file.model'
+import { File } from './file'
 
 export interface Background extends File {
   title?: string
