@@ -31,24 +31,28 @@
   - Azuriom (CMS)
   - Crack
 * Minecraft:
-  - Vanilla (from Alpha to the last version)
+  - Vanilla (from Alpha to the latest version)
   - Forge (all versions)
   - MCP
-* Displaying server information
+* Displaying server information (from 1.4 to the latest Minecraft version)
 * News (using [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2))
 * Settings (RAM and Launcher action after launching the Game)
-* Medias links
 * Java autodownloading (for Windows, macOS and Linux) with checking the hash of each file
 * Game downloading with checking the hash of each file (using [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2))
 * Game launching
 
 ### Installing
 
+> [!NOTE]
+> The library is not yet available on npm.
+
 You need [Node.JS](https://nodejs.org) and [Electron](https://electronjs.org).
 
 ```bash
 npm i eml-core
 ```
+
+`eml-core` package includes TypeScript typings, so you don't need to install `@types/eml-core`.
 
 ### Documentation
 
