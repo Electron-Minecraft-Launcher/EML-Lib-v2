@@ -16,7 +16,6 @@ export default class Maintenance {
    * @param url The URL of your EML AdminTool website.
    */
   constructor(url: string) {
-    if (!url) throw new Error('No URL given for Maintenance')
     this.url = `${url}/api`
   }
 

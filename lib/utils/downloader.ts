@@ -12,7 +12,7 @@ import fetch from 'node-fetch'
 import EventEmitter from '../utils/events'
 import { DownloaderEvents } from '../../types/events'
 
-export default class Downloader extends EventEmitter<DownloaderEvents>  {
+export default class Downloader extends EventEmitter<DownloaderEvents> {
   private size: number = 0
   private dest: string = ''
   private downloaded: { amount: number; size: number } = { amount: 0, size: 0 }
@@ -83,7 +83,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents>  {
     this.emit('cleaned', { amount: i })
   }
 
-  private async downloadFile(files: File[], i: number) {
+  private async downloadFile(files: File[], i: number, t = 0) {
     const file = files[i]
     const dirPath = path.join(this.dest, file.path)
     const filePath = path.join(dirPath, file.name)
@@ -95,10 +95,26 @@ export default class Downloader extends EventEmitter<DownloaderEvents>  {
       const stream = fs.createWriteStream(filePath)
 
       if (res.status !== 200) {
-        throw new ClientError(ErrorType.DOWNLOAD_ERROR, `Error while downloading file: ${res.statusText}`)
+        if (t < 5) {
+          setTimeout(() => this.downloadFile(files, i, t + 1), 1000)
+          return
+        }
+        this.emit('error', {
+          file: file.name,
+          error: res.statusText
+        })
+        return
       }
       if (!res.body) {
-        throw new ClientError(ErrorType.DOWNLOAD_ERROR, 'Error while downloading file: No body')
+        if (t < 5) {
+          setTimeout(() => this.downloadFile(files, i, t + 1), 1000)
+          return
+        }
+        this.emit('error', {
+          file: file.name,
+          error: 'No body'
+        })
+        return
       }
 
       await new Promise((resolve, reject) => {
@@ -150,7 +166,15 @@ export default class Downloader extends EventEmitter<DownloaderEvents>  {
         })
       })
     } catch (error: any) {
-      throw new ClientError(ErrorType.DOWNLOAD_ERROR, `Error while downloading file ${file.name}: ${error}`)
+      if (t < 5) {
+        setTimeout(() => this.downloadFile(files, i, t + 1), 1000)
+        return
+      }
+      this.emit('error', {
+        file: file.name,
+        error: error
+      })
+      return
     }
   }
 

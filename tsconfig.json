@@ -8,12 +8,12 @@
     "skipLibCheck": true,
     "declaration": true,
     "outDir": "./dist",
-    "paths": {
-      "emlcore/*": [
-        "./lib/*"
-      ]
-    }
   },
-  "include": ["lib/**/*.ts", "index.ts", "index.d.ts"],
-  "exclude": ["test/**/*.ts"]
+  "include": [
+    "lib/**/*.ts",
+    "index.ts",
+  ],
+  "exclude": [
+    "test/**/*.ts"
+  ]
 }

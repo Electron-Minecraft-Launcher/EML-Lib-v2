@@ -25,7 +25,6 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
    */
   constructor(url: string) {
     super()
-    if (!url) throw new Error('No URL given for Bootstrap')
     this.url = `${url}/api`
   }
 
@@ -64,7 +63,6 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
     }
 
     const downloadPath = path.join(utils.getTempFolder(), bootstrap.path, bootstrap.name)
-
     const downloader = new Downloader(utils.getTempFolder())
 
     downloader.forwardEvents(this)
@@ -95,5 +93,24 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
       }
       process.exit()
     })
+  }
+
+  /**
+   * Check for updates, download and run the Bootstrap if an update is available. This method is a
+   * combination of `this.checkForUpdate()`, `this.download()` and `this.runUpdate()`. 
+   * 
+   * It allows you to
+   * check for updates, download and run the Bootstrap with a single function call, without having to
+   * call each function separately. However, this method will not return any value and give you no control
+   * over the process. If you need more control, you should use the other methods.
+   * @param currentVersion The current version of your Launcher. You can get it with `app.getVersion()`.
+   */
+  async checkDownloadAndRun(currentVersion: string) {
+    const bootstraps = await this.checkForUpdate(currentVersion)
+
+    if (bootstraps) {
+      const bootstrapPath = await this.download(bootstraps)
+      await this.runUpdate(bootstrapPath)
+    }
   }
 }

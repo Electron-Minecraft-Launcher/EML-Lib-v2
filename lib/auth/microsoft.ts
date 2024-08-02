@@ -18,7 +18,6 @@ export default class MicrosoftAuth {
    * @param clientId [Optional] Your Microsoft application's client ID.
    */
   constructor(mainWindow: BrowserWindow, clientId?: string) {
-    if (!mainWindow) throw new Error('No mainWindow given for MicrosoftAuth')
     this.mainWindow = mainWindow
     this.clientId = clientId || '00000000402b5328'
   }
