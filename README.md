@@ -37,9 +37,8 @@
 * Displaying server information (from 1.4 to the latest Minecraft version)
 * News (using [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2))
 * Settings (RAM and Launcher action after launching the Game)
-* Java autodownloading (for Windows, macOS and Linux) with checking the hash of each file
-* Game downloading with checking the hash of each file (using [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2))
-* Game launching
+* Java autodownloading (for Windows, macOS and Linux)
+* Game downloading (using [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2)) and launching (with Forge, MCP and Vanilla; EML Core will support Fabric and NeoForge soon)
 
 ### Installing
 

@@ -19,8 +19,8 @@ export default class Java extends EventEmitter<DownloaderEvents> {
 
   /**
    * @param minecraftVersion The version of Minecraft you want to install Java for.
-   * @param serverId Your Minecraft server ID (eg. `'minecraft'`). This will be used to create
-   * the server folder (eg. `.minecraft`).
+   * @param serverId Your Minecraft server ID (eg. `'minecraft'`). This will be used to 
+   * create the server folder (eg. `.minecraft`).
    */
   constructor(minecraftVersion: string, serverId: string) {
     super()

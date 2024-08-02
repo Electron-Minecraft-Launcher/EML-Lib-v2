@@ -3,7 +3,7 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { Account } from '../../types/auth'
+import { Account } from '../../types/account'
 import { ClientError, ErrorType } from '../../types/errors'
 
 export default class AzAuth {

@@ -3,15 +3,27 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
+import { Account } from '../../types/account'
+import { ClientError, ErrorType } from './../../types/errors'
+
 export default class CrackAuth {
   /**
    * @deprecated This auth method is not secure, use it only for testing purposes or for local servers!
    */
-  auth(username: string) {
+  auth(username: string): Account {
     if (/^[a-zA-Z0-9_]+$/gm.test(username) && username.length > 2) {
-      return true
+      return {
+        name: username,
+        uuid: '',
+        accessToken: '',
+        clientToken: '',
+        meta: {
+          online: false,
+          type: 'Crack'
+        }
+      }
     } else {
-      return false
+      throw new ClientError(ErrorType.AUTH_ERROR, 'Invalid username')
     }
   }
 }

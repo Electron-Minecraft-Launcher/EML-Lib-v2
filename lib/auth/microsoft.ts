@@ -6,7 +6,7 @@
 import { BrowserWindow } from 'electron'
 // import fetch from 'node-fetch'
 import MicrosoftAuthGui from './microsoft-gui'
-import { Account } from '../../types/auth'
+import { Account } from '../../types/account'
 import { ClientError, ErrorType } from '../../types/errors'
 
 export default class MicrosoftAuth {

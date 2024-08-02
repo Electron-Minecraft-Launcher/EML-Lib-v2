@@ -25,7 +25,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
 
   /**
    * You can use `this.forwardEvents()` to forward events to another EventEmitter.
-   * @param dest Destination folder
+   * @param dest Destination folder.
    */
   constructor(dest: string) {
     super()
@@ -34,7 +34,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
 
   /**
    * Download files from the list.
-   * @param files List of files to download
+   * @param files List of files to download. This list must include folders.
    */
   async download(files: File[]) {
     let filesToDownload: File[] = []
@@ -72,8 +72,12 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
     this.browse(this.dest)
 
     this.browsed.forEach((file) => {
-      if (!files.find((f) => path.join(this.dest, f.path, f.name) === path.join(file.path, file.name)) && !ignore.includes(file.name)) {
-        fs.unlinkSync(path.join(file.path, file.name))
+      const fullPath = path.join(file.path, file.name)
+      if (
+        !files.find((f) => path.join(this.dest, f.path, f.name) === fullPath) &&
+        !ignore.find((ig) => fullPath.startsWith(path.join(this.dest, ig)))
+      ) {
+        fs.unlinkSync(fullPath)
         i++
         this.emit('clean', { file: file.name })
       }

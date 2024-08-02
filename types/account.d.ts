@@ -4,7 +4,7 @@ export interface Account {
   accessToken: string
   clientToken: string
   refreshToken?: string
-  userProperties: any
+  userProperties?: any
   meta: {
     online: boolean
     type: 'Mojang' | 'Xbox' | 'Azuriom' | 'Crack'
