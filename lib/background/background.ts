@@ -16,7 +16,6 @@ export default class Background {
    * @param url The URL of your EML AdminTool website.
    */
   constructor(url: string) {
-    if (!url) throw new Error('No URL given for Background')
     this.url = `${url}/api`
   }
 

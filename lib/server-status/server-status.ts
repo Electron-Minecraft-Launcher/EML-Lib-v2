@@ -18,7 +18,9 @@ export default class ServerStatus {
   private timeout: number
 
   /**
-   * **Attention!** This class may not work for some Minecraft servers (Minecraft 1.6.4 and below).
+   * **Attention!** This class may not work for some Minecraft servers (Minecraft 1.4 and below, or 
+   * servers with a specific configuration). If you encounter any problems, please [open an
+   * issue](https://github.com/Electron-Minecraft-Launcher/EML-Core-v2/issues).
    * @param ip Your Minecraft Server's IP or Host (eg. `'172.65.236.36'` or `'mc.hypixel.net'`).
    * @param port [Optional: default is `25565`] Your Minecraft Server's main port (eg. `25565`).
    * @param protocol [Optional: default is `'modern'`] The Minecraft protocol version (eg. `'modern'`
@@ -30,7 +32,6 @@ export default class ServerStatus {
    * @param timeout [Optional: default is `5`] The timeout in seconds.
    */
   constructor(ip: string, port: number = 25565, protocol: 'modern' | '1.6' | '1.4-1.5', pvn: number, timeout: number = 5) {
-    if (!ip) throw new Error('No IP or host given')
     this.ip = ip
     this.port = port
     this.protocol = protocol

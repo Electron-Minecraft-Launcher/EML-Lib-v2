@@ -13,10 +13,8 @@ export default class AzAuth {
    * @param url The URL of your Azuriom website.
    */
   constructor(url: string) {
-    if (url) {
-      if (url.endsWith('/')) url = url.slice(0, -1)
-      this.url = `${url}/api/auth`
-    } else throw new Error('No URL given for AzAuth')
+    if (url.endsWith('/')) url = url.slice(0, -1)
+    this.url = `${url}/api/auth`
   }
 
   /**

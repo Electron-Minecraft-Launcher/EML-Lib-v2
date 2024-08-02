@@ -16,7 +16,6 @@ export default class News {
    * @param url The URL of your EML AdminTool website.
    */
   constructor(url: string) {
-    if (!url) throw new Error('No URL given for News')
     this.url = `${url}/api`
   }
 

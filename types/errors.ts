@@ -9,7 +9,9 @@ export enum ErrorType {
   FETCH_ERROR,
   NET_ERROR,
   FILE_ERROR,
-  EXEC_ERROR
+  EXEC_ERROR,
+  JAVA_ERROR,
+  MINECRAFT_ERROR
 }
 
 export type ErrorCode =
@@ -24,6 +26,8 @@ export type ErrorCode =
   | typeof ErrorType.FETCH_ERROR
   | typeof ErrorType.FILE_ERROR
   | typeof ErrorType.EXEC_ERROR
+  | typeof ErrorType.JAVA_ERROR
+  | typeof ErrorType.MINECRAFT_ERROR
 
 export class ClientError extends Error {
   code: ErrorCode
