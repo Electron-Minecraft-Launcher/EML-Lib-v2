@@ -42,15 +42,19 @@ export interface MinecraftManifest {
   libraries: [
     {
       downloads: {
-        artifact: {
-          path: string
-          sha1: string
-          size: number
-          url: string
+        artifact?: Artifact
+        classifiers?: {
+          'natives-linux'?: Artifact
+          'natives-osx'?: Artifact
+          'natives-windows'?: Artifact
+          'natives-windows-32'?: Artifact
+          'native-windows-64'?: Artifact
         }
-        name: string
-        rules?: any[]
       }
+      extract?: { exclude: string[] }
+      name?: string
+      natives?: { windows?: string; osx?: string; linux?: string }
+      rules: { action: 'allow' | 'disallow'; os?: { name: 'windows' | 'osx' | 'linux' } }[]
     }
   ]
   logging: {
@@ -71,4 +75,20 @@ export interface MinecraftManifest {
   releaseTime: string
   time: string
   type: string
+}
+
+export interface Artifact {
+  path?: string
+  sha1: string
+  size: number
+  url: string
+}
+
+export interface Assets {
+  objects: {
+    [key: string]: {
+      hash: string
+      size: number
+    }
+  }
 }

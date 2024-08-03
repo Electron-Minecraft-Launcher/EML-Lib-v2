@@ -3,23 +3,25 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { ClientError, ErrorType } from '../../types/errors'
 import { DownloaderEvents } from '../../types/events'
 import EventEmitter from '../utils/events'
-import os from 'os'
 import manifests from '../utils/manifests'
 import { File } from '../../types/file'
 import path from 'path'
 import Downloader from '../utils/downloader'
 import utils from '../utils/utils'
+import { exec } from 'child_process'
+import { EMLCoreError, ErrorType } from '../../types/errors'
 
 export default class Java extends EventEmitter<DownloaderEvents> {
   private minecraftVersion: string
   private serverId: string
 
   /**
+   * You should not use this class if you launch Minecraft with `java.install: 'auto'` in
+   * the configuration.
    * @param minecraftVersion The version of Minecraft you want to install Java for.
-   * @param serverId Your Minecraft server ID (eg. `'minecraft'`). This will be used to 
+   * @param serverId Your Minecraft server ID (eg. `'minecraft'`). This will be used to
    * create the server folder (eg. `.minecraft`).
    */
   constructor(minecraftVersion: string, serverId: string) {
@@ -42,7 +44,7 @@ export default class Java extends EventEmitter<DownloaderEvents> {
 
   /**
    * Get and map the files of the Java version to download.
-   * 
+   *
    * **You should not use this method directly. Use `this.download()` instead.**
    * @returns The files of the Java version.
    */
@@ -80,5 +82,22 @@ export default class Java extends EventEmitter<DownloaderEvents> {
     })
 
     return files
+  }
+
+  async check(
+    absolutePath: string = path.join(utils.getServerFolder(this.serverId), 'runtime', 'jre', 'bin', 'java')
+  ): Promise<{ version: string; arch: '64-bit' | '32-bit' }> {
+    return new Promise((resolve, reject) => {
+      exec(`"${absolutePath}" -version`, (error, stdout, stderr) => {
+        if (error) {
+          reject(new EMLCoreError(ErrorType.JAVA_ERROR, `Java is not correctly installed: ${error.message}`))
+        } else {
+          resolve({
+            version: (stdout || stderr).match(/"(.*?)"/)?.pop() + '',
+            arch: (stdout || stderr).includes('64-Bit') ? '64-bit' : '32-bit'
+          })
+        }
+      })
+    })
   }
 }

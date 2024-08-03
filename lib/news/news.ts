@@ -3,7 +3,7 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { ClientError, ErrorType } from '../../types/errors'
+import { EMLCoreError, ErrorType } from '../../types/errors'
 import { News as News_, NewsCategory } from '../../types/news'
 
 /**
@@ -27,7 +27,7 @@ export default class News {
     let res = await fetch(`${this.url}/news`, { method: 'GET' })
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.FETCH_ERROR, `Error while fetching News from the EML AdminTool: ${err}`)
+        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Error while fetching News from the EML AdminTool: ${err}`)
       })
 
     return res.data as News_[]
@@ -41,7 +41,7 @@ export default class News {
     let res = await fetch(`${this.url}/news/categories`, { method: 'GET' })
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.FETCH_ERROR, `Error while fetching News Categories from the EML AdminTool: ${err}`)
+        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Error while fetching News Categories from the EML AdminTool: ${err}`)
       })
 
     return res.data as NewsCategory[]
@@ -56,7 +56,7 @@ export default class News {
     let res = await fetch(`${this.url}/news/categories/${id}`, { method: 'GET' })
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.FETCH_ERROR, `Error while fetching News Categories from the EML AdminTool: ${err}`)
+        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Error while fetching News Categories from the EML AdminTool: ${err}`)
       })
 
     return res.data as News_[]

@@ -4,7 +4,7 @@
  */
 
 import { Account } from '../../types/account'
-import { ClientError, ErrorType } from '../../types/errors'
+import { EMLCoreError, ErrorType } from '../../types/errors'
 
 export default class AzAuth {
   private url: string
@@ -38,11 +38,11 @@ export default class AzAuth {
     }).then((res: any) => res.json())
 
     if (res.status == 'pending' && res.reason == '2fa') {
-      throw new ClientError(ErrorType.TWOFA_CODE_REQUIRED, '2FA code required')
+      throw new EMLCoreError(ErrorType.TWOFA_CODE_REQUIRED, '2FA code required')
     }
 
     if (res.status == 'error') {
-      throw new ClientError(ErrorType.AUTH_ERROR, `AzAuth authentication failed: ${res.reason}`)
+      throw new EMLCoreError(ErrorType.AUTH_ERROR, `AzAuth authentication failed: ${res.reason}`)
     }
 
     return {
@@ -75,7 +75,7 @@ export default class AzAuth {
     }).then((res: any) => res.json())
 
     if (res.status == 'error') {
-      throw new ClientError(ErrorType.AUTH_ERROR, `AzAuth verify failed: ${res.reason}`)
+      throw new EMLCoreError(ErrorType.AUTH_ERROR, `AzAuth verify failed: ${res.reason}`)
     }
 
     return {

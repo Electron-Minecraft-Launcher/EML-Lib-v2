@@ -29,7 +29,7 @@ export type ErrorCode =
   | typeof ErrorType.JAVA_ERROR
   | typeof ErrorType.MINECRAFT_ERROR
 
-export class ClientError extends Error {
+export class EMLCoreError extends Error {
   code: ErrorCode
   message: any
 

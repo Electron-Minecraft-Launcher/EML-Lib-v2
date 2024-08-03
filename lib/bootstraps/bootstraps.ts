@@ -8,7 +8,7 @@ import utils from '../utils/utils'
 import EventEmitter from '../utils/events'
 import path from 'path'
 import { exec } from 'child_process'
-import { ClientError, ErrorType } from '../../types/errors'
+import { EMLCoreError, ErrorType } from '../../types/errors'
 import { Bootstraps as Bootstraps_ } from '../../types/bootstraps'
 import { File } from '../../types/file'
 import { DownloaderEvents } from '../../types/events'
@@ -59,7 +59,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
     const bootstrap = bootstraps[os] as File | undefined
 
     if (!bootstrap) {
-      throw new ClientError(ErrorType.FILE_ERROR, 'Not available for this operating system')
+      throw new EMLCoreError(ErrorType.FILE_ERROR, 'Not available for this operating system')
     }
 
     const downloadPath = path.join(utils.getTempFolder(), bootstrap.path, bootstrap.name)
@@ -68,7 +68,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
     downloader.forwardEvents(this)
 
     try {
-      downloader.download([bootstrap])
+      await downloader.download([bootstrap])
     } catch (error) {
       throw error
     }
@@ -84,12 +84,12 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
    * @workInProgress **This method is not tested yet.**
    * @param bootstrapPath The path to the downloaded Bootstrap (returned by `this.download()`)
    */
-  async runUpdate(bootstrapPath: string) {
+  runUpdate(bootstrapPath: string) {
     const os = utils.getOS()
     const cmd = os === 'win' ? `start ${bootstrapPath}` : os === 'mac' ? `open ${bootstrapPath}` : `chmod +x ${bootstrapPath} && ./${bootstrapPath}`
     exec(cmd, (err) => {
       if (err) {
-        throw new ClientError(ErrorType.EXEC_ERROR, `Error while executing the Bootstrap: ${err}`)
+        throw new EMLCoreError(ErrorType.EXEC_ERROR, `Error while executing the Bootstrap: ${err}`)
       }
       process.exit()
     })
@@ -110,7 +110,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
 
     if (bootstraps) {
       const bootstrapPath = await this.download(bootstraps)
-      await this.runUpdate(bootstrapPath)
+      this.runUpdate(bootstrapPath)
     }
   }
 }

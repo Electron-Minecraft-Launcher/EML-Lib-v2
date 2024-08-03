@@ -25,13 +25,6 @@
     "url": "https://github.com/Electron-Minecraft-Launcher/EML-Core-v2/issues"
   },
   "homepage": "https://github.com/Electron-Minecraft-Launcher/EML-Core-v2#readme",
-  "devDependencies": {
-    "@types/adm-zip": "^0.5.5",
-    "@types/electron": "^1.6.10",
-    "@types/node-fetch": "^2.6.7",
-    "prettier": "^3.3.1",
-    "typescript": "^5.4.5"
-  },
   "dependencies": {
     "@electron/remote": "^2.1.2",
     "adm-zip": "^0.5.14",
@@ -39,5 +32,12 @@
     "electron": "^31.0.0",
     "fs": "^0.0.1-security",
     "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/electron": "^1.6.10",
+    "@types/node-fetch": "^2.6.7",
+    "prettier": "^3.3.1",
+    "typescript": "^5.4.5"
   }
 }

@@ -4,7 +4,7 @@
  */
 
 import { Account } from '../../types/account'
-import { ClientError, ErrorType } from './../../types/errors'
+import { EMLCoreError, ErrorType } from './../../types/errors'
 
 export default class CrackAuth {
   /**
@@ -23,7 +23,7 @@ export default class CrackAuth {
         }
       }
     } else {
-      throw new ClientError(ErrorType.AUTH_ERROR, 'Invalid username')
+      throw new EMLCoreError(ErrorType.AUTH_ERROR, 'Invalid username')
     }
   }
 }

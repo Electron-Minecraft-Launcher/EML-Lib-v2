@@ -55,12 +55,23 @@ export interface Config {
      */
     install: 'auto' | 'manual'
     /**
-     * [Optional: default is `'runtime/jre/bin/'`]
-     * The path to the `bin` folder of the Java installation. If you use a custom Java installation
-     * with a custom path, you can set it here. If you don't install Java manually, set this value
-     * to `'java'` to use the Java installed on the user's computer.
+     * [Optional: default is `undefined`]
+     * The absolute path to the Java executable.
+     * If you use a manual installation of Java with a custom path, you can set it here. Be careful 
+     * to indicate the correct path depending on the operating system of the user.
+     * If you don't install Java (automatically or manually), set this value to `'java'` to use the 
+     * Java installed on the user's computer.
+     *
+     * **Attention!** This property overrides the `java.relativePath` property.
      */
-    path?: string
+    absolutePath?: string
+    /**
+     * [Optional: default is `'runtime/jre/bin/java'`]
+     * The path (relative to the game folder) to the Java executable.
+     * If you use a manual installation of Java with a custom path, or if you don't install Java,
+     * (automatically or manually) use `java.absolutePath` property instead.
+     */
+    relativePath?: string
     /**
      * [Optional: default is `[]`]
      * **Use this option only if you know what you are doing!** Add custom args to Java.
@@ -98,6 +109,32 @@ export interface Config {
     /**
      * The maximum memory (RAM), in MB, allocated to Minecraft.
      */
+    max: number
+  }
+}
+
+export interface FullConfig {
+  url: string
+  serverId: string
+  ignored: string[]
+  account: Account
+  minecraft: {
+    version: string
+    loader: 'vanilla' | 'forge' | 'mcp'
+    args: string[]
+  }
+  java: {
+    install: 'auto' | 'manual'
+    absolutePath: string
+    args: string[]
+  }
+  window: {
+    width: number
+    height: number
+    fullscreen: boolean
+  }
+  memory: {
+    min: number
     max: number
   }
 }

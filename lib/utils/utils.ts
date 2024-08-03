@@ -3,8 +3,10 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { ClientError, ErrorType } from '../../types/errors'
+import { EMLCoreError, ErrorType } from '../../types/errors'
 import path from 'path'
+import fs from 'fs'
+import crypto from 'crypto'
 
 class Utils {
   /**
@@ -15,7 +17,24 @@ class Utils {
     if (process.platform === 'win32') return 'win'
     if (process.platform === 'darwin') return 'mac'
     if (process.platform === 'linux') return 'lin'
-    throw new ClientError(ErrorType.UNKNOWN_OS, 'Unknown operating system')
+    throw new EMLCoreError(ErrorType.UNKNOWN_OS, 'Unknown operating system')
+  }
+
+  /**
+   * Get the current operating system Minecraft-code.
+   * @returns The operating system code (`'windows'`, `'osx'` or `'linux'`).
+   */
+  getOS_MCCode() {
+    if (process.platform === 'win32') return 'windows'
+    if (process.platform === 'darwin') return 'osx'
+    if (process.platform === 'linux') return 'linux'
+    throw new EMLCoreError(ErrorType.UNKNOWN_OS, 'Unknown operating system')
+  }
+
+  getArch() {
+    if (process.arch.includes('64')) return '64'
+    if (process.arch.includes('32')) return '32'
+    throw new EMLCoreError(ErrorType.UNKNOWN_OS, 'Unknown architecture')
   }
 
   /**
@@ -47,6 +66,20 @@ class Utils {
    */
   getTempFolder() {
     return this.getOS() === 'win' ? process.env.TEMP + '' : '/tmp'
+  }
+
+  /**
+   * Get the SHA1 hash of a file.
+   * @param filePath Path of the file.
+   * @returns The SHA1 hash of the file.
+   */
+  getFileHash(filePath: string) {
+    try {
+      const fileHash = fs.readFileSync(filePath)
+      return crypto.createHash('sha1').update(fileHash).digest('hex')
+    } catch (err) {
+      throw new EMLCoreError(ErrorType.HASH_ERROR, `Error while getting hash of the file ${filePath}: ${err}`)
+    }
   }
 }
 
