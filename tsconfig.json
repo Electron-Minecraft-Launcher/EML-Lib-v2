@@ -10,8 +10,7 @@
     "outDir": "./dist",
   },
   "include": [
-    "lib/**/*.ts",
-    "index.ts",
+    "lib/**/*.ts"
   ],
   "exclude": [
     "test/**/*.ts"

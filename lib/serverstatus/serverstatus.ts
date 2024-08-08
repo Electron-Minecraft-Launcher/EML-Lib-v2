@@ -5,10 +5,10 @@
  */
 
 import * as net from 'net'
-import type { ServerStatus as ServerStatus_ } from '../../types/status.d.ts'
+import type { ServerStatus as ServerStatus_ } from '../../types/status'
 import { EMLCoreError, ErrorType } from '../../types/errors'
-import BufferWriter from './buffer-writer'
-import BufferReader from './buffer-reader'
+import BufferWriter from './bufferwriter'
+import BufferReader from './bufferreader'
 
 export default class ServerStatus {
   private ip: string

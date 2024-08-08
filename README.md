@@ -33,19 +33,19 @@
 * Minecraft:
   - Vanilla (from Alpha to the latest version)
   - Forge (all versions)
-  - MCP
+  - (Fabric, OptiFine and NeoForge coming soon...)
 * Displaying server information (from 1.4 to the latest Minecraft version)
 * News (using [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2))
 * Settings (RAM and Launcher action after launching the Game)
 * Java autodownloading (for Windows, macOS and Linux)
-* Game downloading (using [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2)) and launching (with Forge, MCP and Vanilla; EML Core will support Fabric and NeoForge soon)
+* Game downloading (using [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2)) and launching
 
 ### Installing
 
 > [!NOTE]
 > The library is not yet available on npm.
 
-You need [Node.JS](https://nodejs.org) and [Electron](https://electronjs.org).
+You need [Node.js](https://nodejs.org) and [Electron](https://electronjs.org).
 
 ```bash
 npm i eml-core

@@ -12,7 +12,7 @@ import { File } from '../../types/file'
 
 export default class Cleaner extends EventEmitter<CleanerEvents> {
   private dest: string = ''
-  private browsed: { name: string; path: string; sha1: string }[] = []
+  private browsed: { name: string; path: string }[] = []
 
   /**
    * You can use `this.forwardEvents()` to forward events to another EventEmitter.
@@ -60,8 +60,7 @@ export default class Cleaner extends EventEmitter<CleanerEvents> {
       } else {
         this.browsed.push({
           name: file,
-          path: `${dir}/`.split('\\').join('/').replace(/^\/+/, ''),
-          sha1: utils.getFileHash(path.join(dir, file))
+          path: `${dir}/`.split('\\').join('/').replace(/^\/+/, '')
         })
       }
     })

@@ -4,8 +4,7 @@
  */
 
 import { BrowserWindow } from 'electron'
-// import fetch from 'node-fetch'
-import MicrosoftAuthGui from './microsoft-gui'
+import MicrosoftAuthGui from './microsoftgui'
 import { Account } from '../../types/account'
 import { EMLCoreError, ErrorType } from '../../types/errors'
 

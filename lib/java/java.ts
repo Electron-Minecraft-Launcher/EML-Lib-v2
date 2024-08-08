@@ -14,20 +14,26 @@ import { exec } from 'child_process'
 import { EMLCoreError, ErrorType } from '../../types/errors'
 
 export default class Java extends EventEmitter<DownloaderEvents> {
-  private minecraftVersion: string
+  private minecraftVersion: string | null
   private serverId: string
+  private url?: string
 
   /**
    * You should not use this class if you launch Minecraft with `java.install: 'auto'` in
    * the configuration.
-   * @param minecraftVersion The version of Minecraft you want to install Java for.
+   * @param minecraftVersion The version of Minecraft you want to install Java for. Set to
+   * `null` to get the version from the EML AdminTool. Set to `latest_release` to get the latest
+   * release version of Minecraft. Set to `latest_snapshot` to get the latest snapshot version of
+   * Minecraft.
    * @param serverId Your Minecraft server ID (eg. `'minecraft'`). This will be used to
    * create the server folder (eg. `.minecraft`).
+   * @param url The URL of the EML AdminTool website, to get the version from the EML AdminTool.
    */
-  constructor(minecraftVersion: string, serverId: string) {
+  constructor(minecraftVersion: string | null, serverId: string, url?: string) {
     super()
     this.minecraftVersion = minecraftVersion
     this.serverId = serverId
+    this.url = url
   }
 
   /**
@@ -49,7 +55,7 @@ export default class Java extends EventEmitter<DownloaderEvents> {
    * @returns The files of the Java version.
    */
   async getFiles() {
-    const jreVersion = ((await manifests.getMinecraftManifest(this.minecraftVersion)).javaVersion?.component || 'jre-legacy') as
+    const jreVersion = ((await manifests.getMinecraftManifest(this.minecraftVersion, this.url)).javaVersion?.component || 'jre-legacy') as
       | 'java-runtime-alpha'
       | 'java-runtime-beta'
       | 'java-runtime-delta'

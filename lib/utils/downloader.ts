@@ -32,9 +32,11 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
   /**
    * Download files from the list.
    * @param files List of files to download. This list must include folders.
+   * @param skipFileExists Skip files that already exist in the destination folder (force to 
+   * download all files).
    */
-  async download(files: File[]): Promise<void> {
-    const filesToDownload: File[] = this.getFilesToDownload(files)
+  async download(files: File[], skipFileExists: boolean = false): Promise<void> {
+    const filesToDownload: File[] = !skipFileExists ? this.getFilesToDownload(files) : files
 
     this.size = filesToDownload.reduce((acc, curr) => acc + (curr.size || 0), 0)
     if (this.size === 0) {

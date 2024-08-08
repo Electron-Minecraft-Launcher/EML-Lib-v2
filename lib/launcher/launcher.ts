@@ -1,7 +1,6 @@
 /**
  * @license MIT
  * @copyright Copyright (c) 2024, GoldFrite
- * @copyright Copyright (c) 2019, Pierce Harriz
  */
 
 import { CleanerEvents, DownloaderEvents, FilesManagerEvents, LauncherEvents } from '../../types/events'
@@ -10,7 +9,7 @@ import manifests from '../utils/manifests'
 import utils from '../utils/utils'
 import { Config, FullConfig } from './../../types/config'
 import path from 'path'
-import FilesManager from './files-manager'
+import FilesManager from './filesmanager'
 import Downloader from '../utils/downloader'
 import Cleaner from '../utils/cleaner'
 import Java from '../java/java'
@@ -35,8 +34,10 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
       'options.txt',
       'optionsof.txt'
     ]
-    config.minecraft.loader = config.minecraft.loader || 'vanilla'
-    config.minecraft.args = config.minecraft.args || []
+    config.minecraft = {
+      version: config.minecraft?.version ? config.minecraft?.version : config.url ? null : 'latest_release',
+      args: config.minecraft?.args || []
+    }
     config.java = {
       install: config.java?.install || 'auto',
       absolutePath: config.java?.absolutePath
@@ -52,16 +53,19 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
       fullscreen: config.window?.fullscreen || false
     }
     config.memory = {
-      min: config.memory?.min || 1024,
-      max: config.memory?.max || 2048
+      min: config.memory?.min || 512,
+      max: config.memory?.max && config.memory.max > (config.memory.min || 512) ? config.memory.max : 1023
     }
 
-    this.config = config as FullConfig
+    this.config = {...config as FullConfig, root: utils.getServerFolder(config.serverId)}
   }
 
   async launch() {
-    const manifest = await manifests.getMinecraftManifest(this.config.minecraft.version)
-    const filesManager = new FilesManager(this.config, manifest)
+    const manifest = await manifests.getMinecraftManifest(this.config.minecraft.version, this.config.url)
+    const loader = await manifests.getLoaderInfo(this.config.minecraft.version, this.config.url)
+    this.config.minecraft.version = manifest.id
+
+    const filesManager = new FilesManager(this.config, manifest, loader)
     const downloader = new Downloader(utils.getServerFolder(this.config.serverId))
     const cleaner = new Cleaner(utils.getServerFolder(this.config.serverId))
     const java = new Java(manifest.id, this.config.serverId)
@@ -74,14 +78,21 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
     const modpackFiles = await filesManager.getModpack()
     const librariesFiles = await filesManager.getLibraries()
     const assetsFiles = await filesManager.getAssets()
-    const files = downloader.getFilesToDownload([...javaFiles, ...modpackFiles, ...librariesFiles, ...assetsFiles])
 
-    this.emit('launch_download', { total: { amount: files.length, size: files.reduce((acc, file) => acc + (file.size || 0), 0) } })
+    const javaFilesToDownload = downloader.getFilesToDownload(javaFiles)
+    const modpackFilesToDownload = downloader.getFilesToDownload(modpackFiles)
+    const librariesFilesToDownload = downloader.getFilesToDownload(librariesFiles)
+    const assetsFilesToDownload = downloader.getFilesToDownload(assetsFiles)
+    const filesToDownload = [...javaFilesToDownload, ...modpackFilesToDownload, ...librariesFilesToDownload, ...assetsFilesToDownload]
 
-    await downloader.download(javaFiles)
-    await downloader.download(modpackFiles)
-    await downloader.download(librariesFiles)
-    await downloader.download(assetsFiles)
+    this.emit('launch_download', {
+      total: { amount: filesToDownload.length, size: filesToDownload.reduce((acc, file) => acc + (file.size || 0), 0) }
+    })
+
+    await downloader.download(javaFilesToDownload, true)
+    await downloader.download(modpackFilesToDownload, true)
+    await downloader.download(librariesFilesToDownload, true)
+    await downloader.download(filesToDownload, true)
 
     const extractedNatives = filesManager.extractNatives(librariesFiles)
     const copiedAssets = filesManager.copyAssets()
@@ -90,9 +101,23 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
 
     await java.check(this.config.java.absolutePath)
 
-    cleaner.clean(
-      [...javaFiles, ...modpackFiles, ...librariesFiles, ...assetsFiles, ...extractedNatives, ...copiedAssets],
-      [...this.config.ignored, `versions/${manifest.id}/${manifest.id}.json`, `assets/indexes/${manifest.id}.json`]
-    )
+    const files = [...javaFiles, ...modpackFiles, ...librariesFiles, ...assetsFiles, ...extractedNatives, ...copiedAssets]
+    const ignore = [...this.config.ignored, `versions/${manifest.id}/${manifest.id}.json`, `assets/indexes/${manifest.id}.json`]
+    cleaner.clean(files, ignore)
+
+    const versionDirectory = path.join(this.config.root, 'versions', manifest.id)
+    const clientJarPath = path.join(versionDirectory, `${manifest.id}.jar`)
+    const nativeDirectory = path.join(versionDirectory, 'natives')
+
+    const args = []
+    const jvm = [
+      '-XX:-UseAdaptiveSizePolicy',
+      '-XX:-OmitStackTraceInFastThrow',
+      '-Dfml.ignorePatchDiscrepancies=true',
+      '-Dfml.ignoreInvalidMinecraftCertificates=true',
+      `-Djava.library.path=${nativeDirectory}`,
+      `-Xmx${this.config.memory.max}M`,
+      `-Xms${this.config.memory.min}M`
+    ]
   }
 }

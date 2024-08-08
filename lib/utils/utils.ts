@@ -4,7 +4,7 @@
  */
 
 import { EMLCoreError, ErrorType } from '../../types/errors'
-import path from 'path'
+import path_ from 'path'
 import fs from 'fs'
 import crypto from 'crypto'
 
@@ -57,7 +57,7 @@ class Utils {
   getServerFolder(serverId: string) {
     serverId = serverId.replace(/[^a-z0-9]/gi, '_').toLowerCase()
     serverId = this.getOS() === 'mac' ? serverId : `.${serverId}`
-    return path.join(this.getAppDataFolder(), serverId)
+    return path_.join(this.getAppDataFolder(), serverId)
   }
 
   /**
@@ -69,9 +69,10 @@ class Utils {
   }
 
   /**
-   * Get the SHA1 hash of a file.
+   * Get the hash of a file.
    * @param filePath Path of the file.
-   * @returns The SHA1 hash of the file.
+   * @param algorithm [Optional: default is `'sha1'`] Algorithm to use for the hash.
+   * @returns The hash of the file.
    */
   getFileHash(filePath: string) {
     try {
@@ -80,6 +81,40 @@ class Utils {
     } catch (err) {
       throw new EMLCoreError(ErrorType.HASH_ERROR, `Error while getting hash of the file ${filePath}: ${err}`)
     }
+  }
+
+  /**
+   * Check if a library is allowed for the current operating system.
+   * @param lib The library to check.
+   * @returns `true` if the library is allowed, `false` otherwise.
+   */
+  allowLib(lib: any) {
+    if (lib.rules) {
+      if (lib.rules.length > 1) {
+        if (lib.rules[0].action === 'allow' && lib.rules[1].action === 'disallow') {
+          return lib.rules[1].os.name !== this.getOS_MCCode()
+        }
+        return false
+      } else {
+        if (lib.rules[0].action === 'allow' && lib.rules[0].os) {
+          return lib.rules[0].os.name === this.getOS_MCCode()
+        }
+        return true
+      }
+    }
+    return true
+  }
+
+  /**
+   * Get the name and the path of a Maven library.
+   * @param libName The name of the library (eg. `'com.mojang:authlib:1.5.25'`).
+   * @returns The name and the path of the library.
+   */
+  getLibraryPath(libName: string) {
+    const l = libName.split(':')
+    let name = `${l[1]}-${l[2]}${l[3] ? '-' + l[3] : ''}.jar`.replace('@', '.')
+    let path = path_.join(`${l[0].replace(/\./g, '/')}/${l[1]}/${l[2]}/`)
+    return { name, path }
   }
 }
 

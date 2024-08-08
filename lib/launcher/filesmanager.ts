@@ -6,7 +6,7 @@
 
 import { FullConfig } from '../../types/config'
 import { EMLCoreError, ErrorType } from '../../types/errors'
-import { File } from '../../types/file'
+import { File, Loader } from '../../types/file'
 import { Artifact, MinecraftManifest, Assets } from '../../types/manifest'
 import utils from '../utils/utils'
 import path_ from 'path'
@@ -19,13 +19,13 @@ import Java from '../java/java'
 export default class FilesManager extends EventEmitter<FilesManagerEvents> {
   private config: FullConfig
   private manifest: MinecraftManifest
-  private root: string
+  private loader: Loader
 
-  constructor(config: FullConfig, manifest: MinecraftManifest) {
+  constructor(config: FullConfig, manifest: MinecraftManifest, loader: Loader) {
     super()
     this.config = config
     this.manifest = manifest
-    this.root = path_.join(utils.getServerFolder(this.config.serverId))
+    this.loader = loader
   }
 
   async getJava() {
@@ -38,6 +38,8 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
   }
 
   async getModpack() {
+    if (!this.config.url) return []
+
     const res = await fetch(`${this.config.url}/api/files-updater`)
       .then((res) => res.json())
       .catch((err) => {
@@ -48,11 +50,11 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
   }
 
   async getLibraries() {
-    if (!fs.existsSync(path_.join(this.root, `versions/${this.manifest.id}`))) {
-      fs.mkdirSync(path_.join(this.root, `versions/${this.manifest.id}`), { recursive: true })
+    if (!fs.existsSync(path_.join(this.config.root, `versions/${this.manifest.id}`))) {
+      fs.mkdirSync(path_.join(this.config.root, `versions/${this.manifest.id}`), { recursive: true })
     }
 
-    fs.writeFileSync(path_.join(this.root, `versions/${this.manifest.id}/${this.manifest.id}.json`), JSON.stringify(this.manifest, null, 2))
+    fs.writeFileSync(path_.join(this.config.root, `versions/${this.manifest.id}/${this.manifest.id}.json`), JSON.stringify(this.manifest, null, 2))
 
     let libraries: File[] = []
 
@@ -67,22 +69,23 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
         if (!native) return
         artifact = classifiers ? (classifiers[native.replace('${arch}', utils.getArch())] as unknown as Artifact | undefined) : undefined
       } else {
-        if (!this.allowLib(lib)) return
+        if (!utils.allowLib(lib)) return
         type = 'LIBRARY'
         artifact = lib.downloads.artifact
       }
 
       let name: string
       let path: string
+      
       if (artifact) {
         if (artifact.path) {
           name = artifact.path.split('/').pop()!
           path = path_.join('libraries', artifact.path.split('/').slice(0, -1).join('/'), '/')
         } else {
-          const l = lib.name!.split(':')!
-          name = `${l[1]}-${l[2]}${l[3] ? '-' + l[3] : ''}.jar`
-          path = path_.join('libraries', `${l[0].replace(/\./g, '/')}/${l[1]}/${l[2]}/`)
+          name = utils.getLibraryPath(lib.name + '').name
+          path = path_.join('libraries', utils.getLibraryPath(lib.name + '').path)
         }
+
         libraries.push({
           name: name,
           path: path,
@@ -103,6 +106,10 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
       type: 'LIBRARY'
     })
 
+    if (this.loader.file) {
+      libraries.push(this.loader.file)
+    }
+
     return libraries
   }
 
@@ -113,11 +120,11 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
         throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch assets: ${err}`)
       })
 
-    if (!fs.existsSync(path_.join(this.root, 'assets/indexes'))) {
-      fs.mkdirSync(path_.join(this.root, 'assets/indexes'), { recursive: true })
+    if (!fs.existsSync(path_.join(this.config.root, 'assets/indexes'))) {
+      fs.mkdirSync(path_.join(this.config.root, 'assets/indexes'), { recursive: true })
     }
 
-    fs.writeFileSync(path_.join(this.root, `assets/indexes/${this.manifest.id}.json`), JSON.stringify(res, null, 2))
+    fs.writeFileSync(path_.join(this.config.root, `assets/indexes/${this.manifest.id}.json`), JSON.stringify(res, null, 2))
 
     let assets: File[] = []
 
@@ -137,7 +144,7 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
 
   extractNatives(libraries: File[]) {
     const natives = libraries.filter((lib) => lib.type === 'NATIVE')
-    const nativesFolder = path_.join(this.root, `versions/${this.manifest.id}/natives`)
+    const nativesFolder = path_.join(this.config.root, `versions/${this.manifest.id}/natives`)
     let extracted: File[] = []
 
     if (!fs.existsSync(nativesFolder)) {
@@ -145,7 +152,7 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
     }
 
     natives.forEach((native) => {
-      const zip = new AdmZip(path_.join(this.root, native.path, native.name))
+      const zip = new AdmZip(path_.join(this.config.root, native.path, native.name))
       zip.getEntries().forEach((entry) => {
         if (!entry.entryName.startsWith('META-INF')) {
           if (entry.isDirectory) {
@@ -177,24 +184,24 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
     let copied: File[] = []
 
     if (this.manifest.assets === 'legacy' || this.manifest.assets === 'pre-1.6') {
-      if (fs.existsSync(path_.join(this.root, 'assets', 'legacy'))) {
+      if (fs.existsSync(path_.join(this.config.root, 'assets', 'legacy'))) {
         this.emit('copy_debug', "The 'assets/legacy' directory is no longer used. You can safely remove it from your server's root directory.")
       }
 
-      const assets = JSON.parse(fs.readFileSync(path_.join(this.root, `assets/indexes/${this.manifest.id}.json`), 'utf-8')) as Assets
+      const assets = JSON.parse(fs.readFileSync(path_.join(this.config.root, `assets/indexes/${this.manifest.id}.json`), 'utf-8')) as Assets
 
       Object.entries(assets.objects).forEach(([path, { hash, size }]) => {
         const assetLegacyPath = path_.join('resources', path.split('/').slice(0, -1).join('/'))
         const assetLegacyName = path.split('/').pop()!
 
-        if (!fs.existsSync(path_.join(this.root, assetLegacyPath))) {
-          fs.mkdirSync(path_.join(this.root, assetLegacyPath), { recursive: true })
+        if (!fs.existsSync(path_.join(this.config.root, assetLegacyPath))) {
+          fs.mkdirSync(path_.join(this.config.root, assetLegacyPath), { recursive: true })
         }
 
         if (!fs.existsSync(path_.join(assetLegacyPath, assetLegacyName))) {
           fs.copyFileSync(
-            path_.join(this.root, 'assets', 'objects', hash.substring(0, 2), hash),
-            path_.join(this.root, assetLegacyPath, assetLegacyName)
+            path_.join(this.config.root, 'assets', 'objects', hash.substring(0, 2), hash),
+            path_.join(this.config.root, assetLegacyPath, assetLegacyName)
           )
         }
 
@@ -213,22 +220,5 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
       this.emit('copy_end', { amount: copied.length })
     }
     return copied
-  }
-
-  private allowLib(lib: any) {
-    if (lib.rules) {
-      if (lib.rules.length > 1) {
-        if (lib.rules[0].action === 'allow' && lib.rules[1].action === 'disallow') {
-          return lib.rules[1].os.name !== utils.getOS_MCCode()
-        }
-        return false
-      } else {
-        if (lib.rules[0].action === 'allow' && lib.rules[0].os) {
-          return lib.rules[0].os.name === utils.getOS_MCCode()
-        }
-        return true
-      }
-    }
-    return true
   }
 }

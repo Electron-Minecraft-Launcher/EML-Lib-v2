@@ -39,24 +39,30 @@ export interface MinecraftManifest {
     component: string
     majorVersion: number
   }
-  libraries: [
-    {
-      downloads: {
-        artifact?: Artifact
-        classifiers?: {
-          'natives-linux'?: Artifact
-          'natives-osx'?: Artifact
-          'natives-windows'?: Artifact
-          'natives-windows-32'?: Artifact
-          'native-windows-64'?: Artifact
-        }
+  libraries: {
+    downloads: {
+      artifact?: Artifact
+      classifiers?: {
+        'natives-linux'?: Artifact
+        'natives-osx'?: Artifact
+        'natives-windows'?: Artifact
+        'natives-windows-32'?: Artifact
+        'native-windows-64'?: Artifact
       }
-      extract?: { exclude: string[] }
-      name?: string
-      natives?: { windows?: string; osx?: string; linux?: string }
-      rules: { action: 'allow' | 'disallow'; os?: { name: 'windows' | 'osx' | 'linux' } }[]
     }
-  ]
+    extract?: { exclude: string[] }
+    name?: string
+    natives?: { windows?: string; osx?: string; linux?: string }
+    rules: { action: 'allow' | 'disallow'; os?: { name: 'windows' | 'osx' | 'linux' } }[]
+    /**
+     * Old Forge only.
+     */
+    url?: string
+    /**
+     * Old Forge only.
+     */
+    clientreq?: boolean
+  }[]
   logging: {
     client: {
       argument: string
@@ -75,6 +81,7 @@ export interface MinecraftManifest {
   releaseTime: string
   time: string
   type: string
+  processArguments?: string
 }
 
 export interface Artifact {

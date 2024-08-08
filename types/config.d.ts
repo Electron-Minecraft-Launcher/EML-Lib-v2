@@ -2,9 +2,11 @@ import { Account } from './account'
 
 export interface Config {
   /**
-   * The URL of your EML AdminTool website, where is stored your modpack.
+   * [Optional but strongly recommended!] The URL of your EML AdminTool website, where is stored your 
+   * modpack and loader info. If you don't set this value, the launcher will use the vanilla version 
+   * of Minecraft (loaders such as Forge are only available through the EML AdminTool).
    */
-  url: string
+  url?: string
   /**
    * Your Minecraft server ID (eg. `'minecraft'`). This will be used to create the
    * server folder (eg. `.minecraft`).
@@ -25,18 +27,19 @@ export interface Config {
    */
   account: Account
   /**
+   * [Optional: default is `{ version: 'latest_release', args: [] }`]
    * Minecraft configuration.
+   *
+   * **Attention!** Setting `minecraft.version` overrides the Minecraft version from the EML AdminTool.
+   * Moreover, if you want to use a loader (like Forge), you **must** use the EML AdminTool.
    */
-  minecraft: {
+  minecraft?: {
     /**
-     * The version of Minecraft you want to install.
+     * The version of Minecraft you want to install. Set to `'latest_release'` to install the
+     * latest release version of Minecraft, or `'latest_snapshot'` to install the latest snapshot.
+     * Set to `null` or `undefined` to get the version from the EML AdminTool.
      */
-    version: string
-    /**
-     * [Optional: default is `'vanilla'`]
-     * The used loader to launch the game.
-     */
-    loader?: 'vanilla' | 'forge' | 'mcp'
+    version?: string | null
     /**
      * [Optional: default is `[]`]
      * **Use this option only if you know what you are doing!** Add custom args to launch Minecraft.
@@ -57,9 +60,9 @@ export interface Config {
     /**
      * [Optional: default is `undefined`]
      * The absolute path to the Java executable.
-     * If you use a manual installation of Java with a custom path, you can set it here. Be careful 
+     * If you use a manual installation of Java with a custom path, you can set it here. Be careful
      * to indicate the correct path depending on the operating system of the user.
-     * If you don't install Java (automatically or manually), set this value to `'java'` to use the 
+     * If you don't install Java (automatically or manually), set this value to `'java'` to use the
      * Java installed on the user's computer.
      *
      * **Attention!** This property overrides the `java.relativePath` property.
@@ -70,6 +73,8 @@ export interface Config {
      * The path (relative to the game folder) to the Java executable.
      * If you use a manual installation of Java with a custom path, or if you don't install Java,
      * (automatically or manually) use `java.absolutePath` property instead.
+     *
+     * **Attention!** This property is ignored if `java.absolutePath` is set.
      */
     relativePath?: string
     /**
@@ -116,11 +121,11 @@ export interface Config {
 export interface FullConfig {
   url: string
   serverId: string
+  root: string
   ignored: string[]
   account: Account
   minecraft: {
-    version: string
-    loader: 'vanilla' | 'forge' | 'mcp'
+    version: string | null
     args: string[]
   }
   java: {
