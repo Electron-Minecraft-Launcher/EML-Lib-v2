@@ -88,7 +88,7 @@ class Utils {
    * @param lib The library to check.
    * @returns `true` if the library is allowed, `false` otherwise.
    */
-  allowLib(lib: any) {
+  isLibAllowed(lib: any) {
     if (lib.rules) {
       if (lib.rules.length > 1) {
         if (lib.rules[0].action === 'allow' && lib.rules[1].action === 'disallow') {
@@ -104,17 +104,26 @@ class Utils {
     }
     return true
   }
+  
+  /**
+   * Get the name of a Maven library.
+   * @param libName The name of the library (eg. `'com.mojang:authlib:1.5.25'`).
+   * @returns The name of the library.
+   */
+  getLibraryName(libName: string) {
+    const l = libName.split(':')
+    return `${l[1]}-${l[2]}${l[3] ? '-' + l[3] : ''}.jar`.replace('@', '.')
+  }
 
   /**
-   * Get the name and the path of a Maven library.
+   * Get the path of a Maven library.
    * @param libName The name of the library (eg. `'com.mojang:authlib:1.5.25'`).
-   * @returns The name and the path of the library.
+   * @param path [Optional] Additional path to add to the library path.
+   * @returns The path of the library.
    */
-  getLibraryPath(libName: string) {
+  getLibraryPath(libName: string, ...path: string[]) {
     const l = libName.split(':')
-    let name = `${l[1]}-${l[2]}${l[3] ? '-' + l[3] : ''}.jar`.replace('@', '.')
-    let path = path_.join(`${l[0].replace(/\./g, '/')}/${l[1]}/${l[2]}/`)
-    return { name, path }
+    return path_.join(...path, `${l[0].replace(/\./g, '/')}/${l[1]}/${l[2]}/`)
   }
 }
 

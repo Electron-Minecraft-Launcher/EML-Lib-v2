@@ -69,21 +69,21 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
         if (!native) return
         artifact = classifiers ? (classifiers[native.replace('${arch}', utils.getArch())] as unknown as Artifact | undefined) : undefined
       } else {
-        if (!utils.allowLib(lib)) return
+        if (!utils.isLibAllowed(lib)) return
         type = 'LIBRARY'
         artifact = lib.downloads.artifact
       }
 
       let name: string
       let path: string
-      
+
       if (artifact) {
         if (artifact.path) {
           name = artifact.path.split('/').pop()!
           path = path_.join('libraries', artifact.path.split('/').slice(0, -1).join('/'), '/')
         } else {
-          name = utils.getLibraryPath(lib.name + '').name
-          path = path_.join('libraries', utils.getLibraryPath(lib.name + '').path)
+          name = utils.getLibraryName(lib.name!)
+          path = utils.getLibraryPath(lib.name!, 'libraries')
         }
 
         libraries.push({

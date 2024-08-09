@@ -70,34 +70,33 @@ export default class ForgeLoader extends EventEmitter<any> {
     fs.writeFileSync(path_.join(forgePath, `forge-${this.loader.loader_version}.json`), JSON.stringify(forgeManifest, null, 2))
 
     //* Extract universal
-    const lib = utils.getLibraryPath(installProfile.path)
-    const path = path_.join(this.config.root, 'libraries', lib.path)
-    if (!fs.existsSync(path)) fs.mkdirSync(path, { recursive: true })
+    const universalName = utils.getLibraryName(installProfile.path)
+    const universalPath = utils.getLibraryPath(installProfile.path)
+    const universalExtractPath = path_.join(this.config.root, 'libraries', universalPath)
+    if (!fs.existsSync(universalExtractPath)) fs.mkdirSync(universalExtractPath, { recursive: true })
 
     if (installProfile.filePath) {
-      fs.writeFileSync(path_.join(path, lib.name), zip.getEntry(installProfile.filePath)!.getData())
+      fs.writeFileSync(path_.join(universalExtractPath, universalName), zip.getEntry(installProfile.filePath)!.getData())
     } else if (installProfile.path) {
       zip
         .getEntries()
-        .filter((entry) => entry.entryName.startsWith(`maven/${lib.path}`))
-        .forEach((entry) => fs.writeFileSync(path_.join(path, entry.entryName.split('/').pop()!), entry.getData()))
+        .filter((entry) => entry.entryName.includes(`maven/${universalPath}`))
+        .forEach((entry) => fs.writeFileSync(path_.join(universalExtractPath, entry.entryName.split('/').pop()!), entry.getData()))
     }
 
     if (installProfile.processors) {
       const universalMaven = installProfile.libraries.find((lib: any) => (lib.name + '').startsWith('net.minecraftforge:forge:'))
-      const clientDataName = utils.getLibraryPath(installProfile.path || universalMaven.name).name.replace('.jar', '-clientdata.lzma')
-      const clientDataPath = path_.join(this.config.root, 'libraries', utils.getLibraryPath(installProfile.path || universalMaven.name).path)
+      const clientDataName = utils.getLibraryName(installProfile.path || universalMaven.name).replace('.jar', '-clientdata.lzma')
+      const clientDataExtractPath = utils.getLibraryPath(installProfile.path || universalMaven.name, this.config.root, 'libraries')
       const clientData = zip.getEntry('data/client.lzma')!.getData()
 
-      if (!fs.existsSync(clientDataPath)) fs.mkdirSync(clientDataPath, { recursive: true })
-      fs.writeFileSync(path_.join(clientDataPath, clientDataName), clientData)
+      if (!fs.existsSync(clientDataExtractPath)) fs.mkdirSync(clientDataExtractPath, { recursive: true })
+      fs.writeFileSync(path_.join(clientDataExtractPath, clientDataName), clientData)
     }
 
     //* Install libraries
     let libraries: File[] = []
-    const forgeLibraries = ([...forgeManifest.libraries, ...installProfile.libraries] as MinecraftManifest['libraries']).filter(
-      (lib, i, array) => i === array.findIndex((l) => l.name === lib.name)
-    )
+    const forgeLibraries = [...new Set([...forgeManifest.libraries, ...installProfile.libraries] as MinecraftManifest['libraries'])]
 
     const skip = installProfile.path || installProfile.filePath ? ['net.minecraftforge:forge:', 'net.minecraftforge:minecraftforge:'] : []
 
@@ -113,7 +112,7 @@ export default class ForgeLoader extends EventEmitter<any> {
         if (!native) return
         type = 'NATIVE'
       } else {
-        if (!utils.allowLib(lib)) return
+        if (!utils.isLibAllowed(lib)) return
         type = 'LIBRARY'
       }
 
@@ -127,9 +126,9 @@ export default class ForgeLoader extends EventEmitter<any> {
           name = artifact.path.split('/').pop()!
           path = path_.join('libraries', artifact.path.split('/').slice(0, -1).join('/'), '/')
         } else {
-          name = utils.getLibraryPath(lib.name + '').name
+          name = utils.getLibraryName(lib.name!)
           if (type === 'NATIVE') name = name.replace('.jar', `-${native}.jar`)
-          path = path_.join('libraries', utils.getLibraryPath(lib.name + '').path)
+          path = utils.getLibraryPath(lib.name!, 'libraries')
         }
       } else {
         artifact = await this.getMirrorUrl(lib.name + '')

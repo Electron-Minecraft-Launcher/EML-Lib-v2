@@ -7,7 +7,7 @@ import Downloader from '../utils/downloader'
 import utils from '../utils/utils'
 import EventEmitter from '../utils/events'
 import path from 'path'
-import { exec } from 'child_process'
+import { spawnSync } from 'child_process'
 import { EMLCoreError, ErrorType } from '../../types/errors'
 import { Bootstraps as Bootstraps_ } from '../../types/bootstraps'
 import { File } from '../../types/file'
@@ -87,18 +87,15 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
   runUpdate(bootstrapPath: string) {
     const os = utils.getOS()
     const cmd = os === 'win' ? `start ${bootstrapPath}` : os === 'mac' ? `open ${bootstrapPath}` : `chmod +x ${bootstrapPath} && ./${bootstrapPath}`
-    exec(cmd, (err) => {
-      if (err) {
-        throw new EMLCoreError(ErrorType.EXEC_ERROR, `Error while executing the Bootstrap: ${err}`)
-      }
-      process.exit()
-    })
+    const run = spawnSync(cmd)
+    if (run.error) throw new EMLCoreError(ErrorType.EXEC_ERROR, `Error while executing the Bootstrap: ${run.error}`)
+    process.exit()
   }
 
   /**
    * Check for updates, download and run the Bootstrap if an update is available. This method is a
-   * combination of `this.checkForUpdate()`, `this.download()` and `this.runUpdate()`. 
-   * 
+   * combination of `this.checkForUpdate()`, `this.download()` and `this.runUpdate()`.
+   *
    * It allows you to
    * check for updates, download and run the Bootstrap with a single function call, without having to
    * call each function separately. However, this method will not return any value and give you no control
