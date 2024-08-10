@@ -12,9 +12,9 @@ import path_ from 'path'
 import utils from '../../utils/utils'
 import { EMLCoreError, ErrorType } from '../../../types/errors'
 import EventEmitter from '../../utils/events'
-import Patcher from './patcher'
+import { FilesManagerEvents } from '../../../types/events'
 
-export default class ForgeLoader extends EventEmitter<any> {
+export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
   private config: FullConfig
   private manifest: MinecraftManifest
   private loader: Loader
@@ -39,10 +39,14 @@ export default class ForgeLoader extends EventEmitter<any> {
 
   private extractZip(forgePath: string, minecraftPath: string, zip: AdmZip, jar: AdmZip) {
     let files: File[] = []
+    let i = 0
+
     jar.deleteFile('META-INF/')
 
     zip.getEntries().forEach((entry) => {
       if (!entry.isDirectory) jar.addFile(entry.entryName, entry.getData())
+      i++
+      this.emit('extract_progress', { filename: path_.basename(entry.entryName) })
     })
 
     jar.writeZip(path_.join(minecraftPath, `${this.manifest.id}.jar`))
@@ -52,11 +56,14 @@ export default class ForgeLoader extends EventEmitter<any> {
     files.push({ name: `${forgeManifest.id}.json`, path: this.loader.file!.path, url: '', type: 'OTHER' })
     fs.writeFileSync(path_.join(forgePath, `${forgeManifest.id}.json`), JSON.stringify(forgeManifest, null, 2))
 
-    return { loaderManifest: forgeManifest, libraries: [], files: files }
+    this.emit('extract_end', { amount: i })
+
+    return { loaderManifest: forgeManifest, installProfile: null, libraries: [], files: files }
   }
 
   private extractJar(forgePath: string, zip: AdmZip) {
     let files: File[] = []
+    let i = 0
 
     //* Extract install profile
     let installProfile = JSON.parse(zip.getEntry('install_profile.json')?.getData().toString('utf8') + '')
@@ -69,8 +76,10 @@ export default class ForgeLoader extends EventEmitter<any> {
       forgeManifest = JSON.parse(zip.getEntry(path_.basename(installProfile.json))?.getData().toString('utf8') + '')
     }
 
-    files.push({ name: `forge-${this.loader.loader_version}.json`, path: this.loader.file!.path, url: '', type: 'OTHER' })
     fs.writeFileSync(path_.join(forgePath, `forge-${this.loader.loader_version}.json`), JSON.stringify(forgeManifest, null, 2))
+    files.push({ name: `forge-${this.loader.loader_version}.json`, path: this.loader.file!.path, url: '', type: 'OTHER' })
+    i++
+    this.emit('extract_progress', { filename: 'install_profile.json' })
 
     //* Extract universal
     const universalName = utils.getLibraryName(installProfile.path)
@@ -79,15 +88,19 @@ export default class ForgeLoader extends EventEmitter<any> {
     if (!fs.existsSync(universalExtractPath)) fs.mkdirSync(universalExtractPath, { recursive: true })
 
     if (installProfile.filePath) {
-      files.push({ name: universalName, path: path_.join('libraries', universalPath), url: '', type: 'LIBRARY' })
       fs.writeFileSync(path_.join(universalExtractPath, universalName), zip.getEntry(installProfile.filePath)!.getData())
+      files.push({ name: universalName, path: path_.join('libraries', universalPath), url: '', type: 'LIBRARY' })
+      i++
+      this.emit('extract_progress', { filename: installProfile.filePath })
     } else if (installProfile.path) {
       zip
         .getEntries()
         .filter((entry) => entry.entryName.includes(`maven/${universalPath}`))
         .forEach((entry) => {
-          files.push({ name: entry.entryName.split('/').pop()!, path: path_.join('libraries', universalPath), url: '', type: 'LIBRARY' })
           fs.writeFileSync(path_.join(universalExtractPath, entry.entryName.split('/').pop()!), entry.getData())
+          files.push({ name: entry.entryName.split('/').pop()!, path: path_.join('libraries', universalPath), url: '', type: 'LIBRARY' })
+          i++
+          this.emit('extract_progress', { filename: path_.basename(entry.entryName) })
         })
     }
 
@@ -99,11 +112,13 @@ export default class ForgeLoader extends EventEmitter<any> {
       const clientData = zip.getEntry('data/client.lzma')!.getData()
 
       if (!fs.existsSync(clientDataExtractPath)) fs.mkdirSync(clientDataExtractPath, { recursive: true })
-      files.push({ name: clientDataName, path: path_.join('libraries', clientDataPath), url: '', type: 'LIBRARY' })
       fs.writeFileSync(path_.join(clientDataExtractPath, clientDataName), clientData)
+      files.push({ name: clientDataName, path: path_.join('libraries', clientDataPath), url: '', type: 'LIBRARY' })
+      i++
+      this.emit('extract_progress', { filename: clientDataName })
     }
 
-    //* Download libraries
+    //* Get libraries
     let libraries: File[] = []
     const forgeLibraries = [...new Set([...forgeManifest.libraries, ...installProfile.libraries] as MinecraftManifest['libraries'])]
 
@@ -155,11 +170,9 @@ export default class ForgeLoader extends EventEmitter<any> {
 
     files.push(...libraries)
 
-    //* Patch
-    const patcher = new Patcher(this.config, this.manifest, this.loader, installProfile)
-    files.push(...patcher.patch())
+    this.emit('extract_end', { amount: i })
 
-    return { loaderManifest: forgeManifest, libraries: libraries, files: files }
+    return { loaderManifest: forgeManifest, installProfile: installProfile, libraries: libraries, files: files }
   }
 
   private async getMirrorUrl(lib: string) {
@@ -179,7 +192,7 @@ export default class ForgeLoader extends EventEmitter<any> {
 
       if (!res2) continue
 
-      return { url, size: res1, sha1: res2 }
+      return { url: url, size: res1, sha1: res2 }
     }
 
     throw new EMLCoreError(ErrorType.FETCH_ERROR, `Error while getting mirror URL for the library ${lib}`)

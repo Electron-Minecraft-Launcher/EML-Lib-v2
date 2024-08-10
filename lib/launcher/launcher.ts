@@ -13,6 +13,7 @@ import FilesManager from './filesmanager'
 import Downloader from '../utils/downloader'
 import Cleaner from '../utils/cleaner'
 import Java from '../java/java'
+import LoaderManager from './loadermanager'
 
 export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEvents & CleanerEvents & FilesManagerEvents> {
   private config: FullConfig
@@ -61,19 +62,24 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
   }
 
   async launch() {
+    //* Init launch
     const manifest = await manifests.getMinecraftManifest(this.config.minecraft.version, this.config.url)
     const loader = await manifests.getLoaderInfo(this.config.minecraft.version, this.config.url)
     this.config.minecraft.version = manifest.id
 
     const filesManager = new FilesManager(this.config, manifest, loader)
+    const loaderManager = new LoaderManager(this.config, manifest, loader)
     const downloader = new Downloader(utils.getServerFolder(this.config.serverId))
     const cleaner = new Cleaner(utils.getServerFolder(this.config.serverId))
     const java = new Java(manifest.id, this.config.serverId)
 
     filesManager.forwardEvents(this)
+    loaderManager.forwardEvents(this)
     downloader.forwardEvents(this)
     cleaner.forwardEvents(this)
+    java.forwardEvents(this)
 
+    //* Compute download
     this.emit('launch_compute_download')
 
     const javaFiles = await filesManager.getJava()
@@ -87,6 +93,7 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
     const assetsFilesToDownload = downloader.getFilesToDownload(assetsFiles)
     const filesToDownload = [...javaFilesToDownload, ...modpackFilesToDownload, ...librariesFilesToDownload, ...assetsFilesToDownload]
 
+    //* Download
     this.emit('launch_download', { total: { amount: filesToDownload.length, size: filesToDownload.reduce((acc, file) => acc + file.size!, 0) } })
 
     await downloader.download(javaFilesToDownload, true)
@@ -94,18 +101,24 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
     await downloader.download(librariesFilesToDownload, true)
     await downloader.download(filesToDownload, true)
 
+    //* Install loader
     this.emit('launch_install_loader', loader)
 
-    
+    const loaderFiles = loaderManager.setupLoader()
 
+    //* Extract natives
     this.emit('launch_extract_natives')
 
     const extractedNatives = filesManager.extractNatives(librariesFiles)
     const copiedAssets = filesManager.copyAssets()
 
+    //* Check Java
     this.emit('launch_check_java')
 
     java.check(this.config.java.absolutePath)
+
+    //* Clean
+    this.emit('launch_clean')
 
     const files = [...javaFiles, ...modpackFiles, ...librariesFiles, ...assetsFiles, ...extractedNatives, ...copiedAssets]
     const ignore = [...this.config.ignored, `versions/${manifest.id}/${manifest.id}.json`, `assets/indexes/${manifest.id}.json`]

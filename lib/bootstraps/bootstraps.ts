@@ -51,7 +51,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
    * Download the latest Bootstrap from the EML AdminTool.
    * The downloaded Bootstrap will be saved in the temp folder. The function will return the path to the downloaded Bootstrap.
    * This method does not check for update or runs the update, it will always download the latest version.
-   * @param bootstraps The Bootstraps object returned by `this.checkForUpdate()`.
+   * @param bootstraps The Bootstraps object returned by `Bootstraps.checkForUpdate()`.
    * @returns The path to the downloaded Bootstrap.
    */
   async download(bootstraps: Bootstraps_): Promise<string> {
@@ -82,7 +82,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
    * If the file does not exist or is not executable, an error will be thrown.
    * This method automatically close the Launcher after the Bootstrap is executed.
    * @workInProgress **This method is not tested yet.**
-   * @param bootstrapPath The path to the downloaded Bootstrap (returned by `this.download()`)
+   * @param bootstrapPath The path to the downloaded Bootstrap (returned by `Bootstraos.download()`)
    */
   runUpdate(bootstrapPath: string) {
     const os = utils.getOS()
@@ -94,11 +94,10 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
 
   /**
    * Check for updates, download and run the Bootstrap if an update is available. This method is a
-   * combination of `this.checkForUpdate()`, `this.download()` and `this.runUpdate()`.
+   * combination of `Bootstraps.checkForUpdate()`, `Bootstraps.download()` and `Bootstraps.runUpdate()`.
    *
-   * It allows you to
-   * check for updates, download and run the Bootstrap with a single function call, without having to
-   * call each function separately. However, this method will not return any value and give you no control
+   * It allows you to check for updates, download and run the Bootstrap with a single function call, without having
+   * to call each function separately. However, this method will not return any value and give you no control
    * over the process. If you need more control, you should use the other methods.
    * @param currentVersion The current version of your Launcher. You can get it with `app.getVersion()`.
    */

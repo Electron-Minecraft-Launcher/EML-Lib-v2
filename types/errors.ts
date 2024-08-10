@@ -1,3 +1,21 @@
+/**
+ * @license MIT
+ * @copyright Copyright (c) 2024, GoldFrite
+ */
+
+/**
+ * The error class for EMLCore.
+ */
+export class EMLCoreError extends Error {
+  code: ErrorCode
+  message: any
+
+  constructor(code: ErrorCode, message: any) {
+    super(message)
+    this.code = code
+  }
+}
+
 export enum ErrorType {
   UNKNOWN_ERROR,
   TWOFA_CODE_REQUIRED,
@@ -28,13 +46,3 @@ export type ErrorCode =
   | typeof ErrorType.EXEC_ERROR
   | typeof ErrorType.JAVA_ERROR
   | typeof ErrorType.MINECRAFT_ERROR
-
-export class EMLCoreError extends Error {
-  code: ErrorCode
-  message: any
-
-  constructor(code: ErrorCode, message: any) {
-    super(message)
-    this.code = code
-  }
-}

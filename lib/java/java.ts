@@ -49,9 +49,9 @@ export default class Java extends EventEmitter<DownloaderEvents> {
   }
 
   /**
-   * Get and map the files of the Java version to download.
+   * Get the files of the Java version to download.
    *
-   * **You should not use this method directly. Use `this.download()` instead.**
+   * **You should not use this method directly. Use `Java.download()` instead.**
    * @returns The files of the Java version.
    */
   async getFiles() {

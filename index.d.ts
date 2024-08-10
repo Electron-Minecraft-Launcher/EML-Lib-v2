@@ -10,19 +10,26 @@ import Java from './lib/java/java'
 import Launcher from './lib/launcher/launcher'
 
 /**
- * ## EML Core
- *
- * Be careful: **this Node.js library requires [Electron](https://www.npmjs.com/package/electron)!**
- * You need Electron for the Microsoft login.
- *
- * Create your Electron Minecraft Launcher easily.
+ * ## Electron Minecraft Launcher Core
+ * ### Create your Electron Minecraft Launcher easily.
  * 
- * To get all the capacities of this Node.js library, you must set up your
- * [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2) website!
+ * ---
  *
+ * **Requirements:**
+ * - Node.js 15.14.0 or higher: see [Node.js](https://nodejs.org/)
+ * - Electron 15.0.0 or higher: please install it with `npm install electron`
+ * 
+ * **Recommandations:** 
+ * - To get all the capacities of this Node.js library, you must set up your
+ * [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2) website!
+ * - If you don't want to use the EML AdminTool, you should rather use the
+ * [Minecraft Launcher Core](https://npmjs.com/package/minecraft-launcher-core) library.
+ *
+ * ---
+ * 
+ * [Docs](https://github.com/Electron-Minecraft-Launcher/EML-Core/wiki) —
  * [GitHub](https://github.com/Electron-Minecraft-Launcher/EML-Core) —
  * [NPM](https://www.npmjs.com/package/eml-core) —
- * [Doc](https://github.com/Electron-Minecraft-Launcher/EML-Core/wiki) —
  * [EML Website](https://electron-minecraft-launcher.ml)
  *
  * ---
@@ -43,7 +50,7 @@ export { default as Bootstrap } from './lib/bootstraps/bootstraps'
 export { default as Maintenance } from './lib/maintenance/maintenance'
 export { default as News } from './lib/news/news'
 export { default as Background } from './lib/background/background'
-export { default as ServerStatus } from './lib/server-status/server-status'
+export { default as ServerStatus } from './lib/serverstatus/serverstatus'
 export { default as Java } from './lib/java/java'
 export { default as Launcher } from './lib/launcher/launcher'
 export default EMLCore

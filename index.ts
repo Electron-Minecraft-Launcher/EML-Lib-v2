@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright (c) 2024, GoldFrite
+ */
+
 import MicrosoftAuth from './lib/auth/microsoft'
 import AzAuth from './lib/auth/azuriom'
 import CrackAuth from './lib/auth/crack'
@@ -18,4 +23,3 @@ declare global {
     export { MicrosoftAuth, AzAuth, CrackAuth, Bootstraps, Maintenance, News, Background, ServerStatus, Java, Launcher }
   }
 }
-

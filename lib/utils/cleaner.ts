@@ -15,7 +15,6 @@ export default class Cleaner extends EventEmitter<CleanerEvents> {
   private browsed: { name: string; path: string }[] = []
 
   /**
-   * You can use `this.forwardEvents()` to forward events to another EventEmitter.
    * @param dest Destination folder.
    */
   constructor(dest: string) {

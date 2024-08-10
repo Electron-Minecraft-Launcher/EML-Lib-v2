@@ -21,7 +21,6 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
   private history: { size: number; time: number }[] = []
 
   /**
-   * You can use `this.forwardEvents()` to forward events to another EventEmitter.
    * @param dest Destination folder.
    */
   constructor(dest: string) {

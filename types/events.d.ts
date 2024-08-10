@@ -21,6 +21,7 @@ export interface LauncherEvents {
   ]
   launch_extract_natives: []
   launch_check_java: []
+  launch_clean: []
   launch_debug: [string]
 }
 

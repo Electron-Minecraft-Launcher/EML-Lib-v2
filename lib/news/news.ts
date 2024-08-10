@@ -49,7 +49,7 @@ export default class News {
 
   /**
    * Get the News of a specific category.
-   * @param id The ID of the category (got from `this.getCategories()`).
+   * @param id The ID of the category (got from `News.getCategories()`).
    * @returns The News if the category.
    */
   async getNewsByCategory(id: number): Promise<News_[]> {
