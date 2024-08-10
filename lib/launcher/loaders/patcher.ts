@@ -11,6 +11,7 @@ import utils from '../../utils/utils'
 import fs from 'fs'
 import path_ from 'path'
 import { spawnSync } from 'child_process'
+import { File } from '../../../types/file'
 
 export default class Patcher {
   private config: FullConfig
@@ -26,7 +27,8 @@ export default class Patcher {
   }
 
   patch() {
-    if (!this.installProfile.processors || this.installProfile.processors.length === 0 || this.isPatched()) return true
+    const files = this.isPatched()
+    if (!this.installProfile.processors || this.installProfile.processors.length === 0 || files.patched) return files.files
 
     const processors = this.installProfile.processors
 
@@ -49,11 +51,16 @@ export default class Patcher {
       // TODO if (patch.error) this.emit('debug', patch.error)
       // TODO if (patch.status === 0) this.emit('patch', `Patched ${processor.jar}`)
     })
+
+    return files.files
   }
 
   private isPatched() {
-    let files: string[] = []
-    let processors = this.installProfile.processors
+    const processors = this.installProfile.processors
+
+    let patched = true
+    let files: File[] = []
+    let libraries: string[] = []
 
     processors.forEach((processor: any) => {
       if (processor?.sides && !processor.sides.includes('client')) return
@@ -62,20 +69,23 @@ export default class Patcher {
         arg = arg.replace('{', '').replace('}', '')
         if (this.installProfile.data[arg]) {
           if (arg === 'BINPATCH') return
-          files.push(this.installProfile.data[arg].client)
+          libraries.push(this.installProfile.data[arg].client)
         }
       })
     })
 
-    files = [...new Set(files)]
+    libraries = [...new Set(libraries)]
 
-    for (let file of files) {
-      let libName = utils.getLibraryName(file.replace('[', '').replace(']', ''))
-      let libExtractPath = utils.getLibraryPath(file.replace('[', '').replace(']', ''), this.config.root, 'libraries')
-      if (!fs.existsSync(path_.join(libExtractPath, libName))) return false
+    for (let lib of libraries) {
+      const libName = utils.getLibraryName(lib.replace('[', '').replace(']', ''))
+      const libPath = utils.getLibraryPath(lib.replace('[', '').replace(']', ''))
+      const libExtractPath = path_.join(this.config.root, 'libraries', libPath)
+
+      files.push({ name: libName, path: path_.join('libraries', libPath), url: '', type: 'LIBRARY' })
+      if (!fs.existsSync(path_.join(libExtractPath, libName))) patched = false
     }
 
-    return true
+    return { patched, files }
   }
 
   private getJarMain(jarPath: string) {

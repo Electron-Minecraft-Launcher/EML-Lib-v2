@@ -4,7 +4,7 @@
  */
 
 import { FullConfig } from '../../types/config'
-import { Loader } from '../../types/file'
+import { File, Loader } from '../../types/file'
 import { MinecraftManifest } from '../../types/manifest'
 import ForgeLoader from './loaders/forgeloader'
 
@@ -20,9 +20,11 @@ export default class LoaderManager {
   }
 
   async setupLoader() {
+    let setup = { loaderManifest: null as null | MinecraftManifest, libraries: [] as File[], files: [] as File[] }
+    
     if (this.loader.loader === 'forge') {
       const forgeLoader = new ForgeLoader(this.config, this.manifest, this.loader)
-      await forgeLoader.setup()
+      setup = forgeLoader.setup()
     }
   }
 }

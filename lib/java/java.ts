@@ -10,7 +10,7 @@ import { File } from '../../types/file'
 import path from 'path'
 import Downloader from '../utils/downloader'
 import utils from '../utils/utils'
-import { exec } from 'child_process'
+import { spawnSync } from 'child_process'
 import { EMLCoreError, ErrorType } from '../../types/errors'
 
 export default class Java extends EventEmitter<DownloaderEvents> {
@@ -90,20 +90,19 @@ export default class Java extends EventEmitter<DownloaderEvents> {
     return files
   }
 
-  async check(
-    absolutePath: string = path.join(utils.getServerFolder(this.serverId), 'runtime', 'jre', 'bin', 'java')
-  ): Promise<{ version: string; arch: '64-bit' | '32-bit' }> {
-    return new Promise((resolve, reject) => {
-      exec(`"${absolutePath}" -version`, (error, stdout, stderr) => {
-        if (error) {
-          reject(new EMLCoreError(ErrorType.JAVA_ERROR, `Java is not correctly installed: ${error.message}`))
-        } else {
-          resolve({
-            version: (stdout || stderr).match(/"(.*?)"/)?.pop() + '',
-            arch: (stdout || stderr).includes('64-Bit') ? '64-bit' : '32-bit'
-          })
-        }
-      })
-    })
+  check(absolutePath: string = path.join(utils.getServerFolder(this.serverId), 'runtime', 'jre', 'bin', 'java')): {
+    version: string
+    arch: '64-bit' | '32-bit'
+  } {
+    const check = spawnSync(`"${absolutePath}" -version`)
+    if (check.error) throw new EMLCoreError(ErrorType.JAVA_ERROR, `Java is not correctly installed: ${check.error.message}`)
+    return {
+      version:
+        (check.stdout || check.stderr)
+          .toString('utf8')
+          .match(/"(.*?)"/)
+          ?.pop() + '',
+      arch: (check.stdout || check.stderr).toString('utf8').includes('64-Bit') ? '64-bit' : '32-bit'
+    }
   }
 }

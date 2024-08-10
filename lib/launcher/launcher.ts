@@ -57,7 +57,7 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
       max: config.memory?.max && config.memory.max > (config.memory.min || 512) ? config.memory.max : 1023
     }
 
-    this.config = {...config as FullConfig, root: utils.getServerFolder(config.serverId)}
+    this.config = { ...(config as FullConfig), root: utils.getServerFolder(config.serverId) }
   }
 
   async launch() {
@@ -74,6 +74,8 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
     downloader.forwardEvents(this)
     cleaner.forwardEvents(this)
 
+    this.emit('launch_compute_download')
+
     const javaFiles = await filesManager.getJava()
     const modpackFiles = await filesManager.getModpack()
     const librariesFiles = await filesManager.getLibraries()
@@ -85,21 +87,25 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
     const assetsFilesToDownload = downloader.getFilesToDownload(assetsFiles)
     const filesToDownload = [...javaFilesToDownload, ...modpackFilesToDownload, ...librariesFilesToDownload, ...assetsFilesToDownload]
 
-    this.emit('launch_download', {
-      total: { amount: filesToDownload.length, size: filesToDownload.reduce((acc, file) => acc + (file.size || 0), 0) }
-    })
+    this.emit('launch_download', { total: { amount: filesToDownload.length, size: filesToDownload.reduce((acc, file) => acc + file.size!, 0) } })
 
     await downloader.download(javaFilesToDownload, true)
     await downloader.download(modpackFilesToDownload, true)
     await downloader.download(librariesFilesToDownload, true)
     await downloader.download(filesToDownload, true)
 
+    this.emit('launch_install_loader', loader)
+
+    
+
+    this.emit('launch_extract_natives')
+
     const extractedNatives = filesManager.extractNatives(librariesFiles)
     const copiedAssets = filesManager.copyAssets()
 
-    this.emit('launch_debug', 'Checking Java...')
+    this.emit('launch_check_java')
 
-    await java.check(this.config.java.absolutePath)
+    java.check(this.config.java.absolutePath)
 
     const files = [...javaFiles, ...modpackFiles, ...librariesFiles, ...assetsFiles, ...extractedNatives, ...copiedAssets]
     const ignore = [...this.config.ignored, `versions/${manifest.id}/${manifest.id}.json`, `assets/indexes/${manifest.id}.json`]
