@@ -25,13 +25,13 @@
 ## Features
 
 - **Authentication**: Authenticate users with Microsoft, Azuriom or Crack.
-- **Minecraft**: Automatically download and launch Minecraft (Vanilla and Forge ^[1]; Fabric, NeoForge, Quilt and MCP are coming soon), and remove unwanted files (such as unwanted mods).
+- **Minecraft**: Automatically download and launch Minecraft (Vanilla and Forge [^1]; Fabric, NeoForge, Quilt and MCP are coming soon), and remove unwanted files (such as unwanted mods).
 - **Java**: Automatically download and install Java.
-- **Bootstraps ^[1]**: Auto-update your launcher.
-- **Maintenance ^[1]**: Block the launcher during maintenance.
+- **Bootstraps [^1]**: Auto-update your launcher.
+- **Maintenance [^1]**: Block the launcher during maintenance.
 - **Server status**: Displaying server information (from Minecraft 1.4 to the latest Minecraft version)
-- **News ^[1]**: Displaying news.
-- **Background ^[1]**: Displaying a background image.
+- **News [^1]**: Displaying news.
+- **Background [^1]**: Displaying a background image.
 
 ## Installation
 
@@ -107,4 +107,4 @@ Please indicate the following information in your issue:
 - The loader used (Vanilla, Forge, Fabric, etc., including the loader version);
 - The result of the test (`OK` if the test was successful, `KO` if the test failed, or a detailed explanation if the test was not conclusive).
 
-^[1]: Requires the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2).
+[^1]: Requires the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2).
