@@ -24,22 +24,27 @@
 
 ## Features
 
-- Launcher Bootstrap
-- Auth:
-  - Microsoft
-  - Azuriom (CMS)
-  - Crack
-- Minecraft:
-  - Vanilla (from Alpha to the latest version)
-  - Forge (all versions)
-  - (Fabric, NeoForge, Quilt and MCP coming soon...)
-- Displaying server information (from 1.4 to the latest Minecraft version)
-- News (using [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2))
-- Settings (RAM and Launcher action after launching the Game)
-- Java download (for Windows, macOS and Linux)
-- Game download (using [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2)) and launching
+- **Authentication**: Authenticate users with Microsoft, Azuriom or Crack.
+- **Minecraft**: Automatically download and launch Minecraft (Vanilla and Forge ^[1]; Fabric, NeoForge, Quilt and MCP are coming soon), and remove unwanted files (such as unwanted mods).
+- **Java**: Automatically download and install Java.
+- **Bootstraps ^[1]**: Auto-update your launcher.
+- **Maintenance ^[1]**: Block the launcher during maintenance.
+- **Server status**: Displaying server information (from Minecraft 1.4 to the latest Minecraft version)
+- **News ^[1]**: Displaying news.
+- **Background ^[1]**: Displaying a background image.
 
 ## Installation
+
+### Software requirements
+
+- Node.js 15.14.0 or higher: see [Node.js](https://nodejs.org/);
+- Electron 15.0.0 or higher: please install it with `npm i electron` _if you use Microsoft Authentication_.
+
+To get all the capacities of this Node.js library, you must set up your [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2) website! Without it, you can only use Minecraft Vanilla, and many features will be disabled (such as News, Bootstrap, etc.).
+
+If you don't want to use the EML AdminTool, you should rather use the [Minecraft Launcher Core](https://npmjs.com/package/minecraft-launcher-core) library.
+
+### EML Core installation
 
 > [!NOTE]
 > The library is not yet available on npm.
@@ -52,9 +57,9 @@ npm i emlcore
 
 `emlcore` package includes TypeScript typings, so you don't need to install `@types/emlcore`.
 
-## Documentation
+### Quick start
 
-Quick start (once the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2) is installed and configured):
+Quick start using the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2:
 
 ```javascript
 const EMLCore = require('emlcore')
@@ -74,10 +79,32 @@ Please refer to the [documentation](https://github.com/Electrn-Minecraft-Launche
 
 The library have been tested on:
 
-| Minecraft version | OS                      | Loader  |
-| ----------------- | ----------------------- | ------- |
-| 1.21.1            | Windows 11 (26120.1252) | Vanilla |
-| 1.17.1            | Windows 11 (19043.1165) | Vanilla |
-| 1.12.2            | Windows 11 (19043.1165) | Vanilla |
-| 1.7.10            | Windows 11 (19043.1165) | Vanilla |
+| Minecraft version | OS                      | Loader  | Result |
+| ----------------- | ----------------------- | ------- | ------ |
+| 1.21.1            | Windows 11 (26120.1252) | Vanilla | OK     |
+| 1.17.1            | Windows 11 (19043.1165) | Vanilla | OK     |
+| 1.12.2            | Windows 11 (19043.1165) | Vanilla | OK     |
+| 1.7.10            | Windows 11 (19043.1165) | Vanilla | OK     |
 
+## Contributing
+
+### Development
+
+Download the code and run the commands:
+
+```bash
+cd EML-Core-v2
+npm i
+```
+
+### Tests
+
+You can submit your tests by creating an issue.
+
+Please indicate the following information in your issue:
+- The Minecraft version;
+- The operating system the test was performed on (including the version);
+- The loader used (Vanilla, Forge, Fabric, etc., including the loader version);
+- The result of the test (`OK` if the test was successful, `KO` if the test failed, or a detailed explanation if the test was not conclusive).
+
+^[1]: Requires the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2).
