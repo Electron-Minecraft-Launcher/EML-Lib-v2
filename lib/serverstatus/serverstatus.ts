@@ -6,7 +6,7 @@
 
 import * as net from 'net'
 import type { ServerStatus as ServerStatus_ } from '../../types/status'
-import { EMLCoreError, ErrorType } from '../../types/errors'
+import { EMLLibError, ErrorType } from '../../types/errors'
 import BufferWriter from './bufferwriter'
 import BufferReader from './bufferreader'
 
@@ -20,7 +20,7 @@ export default class ServerStatus {
   /**
    * **Attention!** This class may not work for some Minecraft servers (Minecraft 1.4 and below, or 
    * servers with a specific configuration). If you encounter any problems, please [open an
-   * issue](https://github.com/Electron-Minecraft-Launcher/EML-Core-v2/issues).
+   * issue](https://github.com/Electron-Minecraft-Launcher/EML-Lib-v2/issues).
    * @param ip Your Minecraft Server's IP or Host (eg. `'172.65.236.36'` or `'mc.hypixel.net'`).
    * @param port [Optional: default is `25565`] Your Minecraft Server's main port (eg. `25565`).
    * @param protocol [Optional: default is `'modern'`] The Minecraft protocol version (eg. `'modern'`
@@ -51,7 +51,7 @@ export default class ServerStatus {
       socket.setNoDelay(true)
 
       const timeout = setTimeout(() => {
-        throw new EMLCoreError(ErrorType.NET_ERROR, 'Connection timed out')
+        throw new EMLLibError(ErrorType.NET_ERROR, 'Connection timed out')
       }, this.timeout * 1000)
 
       socket.on('connect', () => {
@@ -86,7 +86,7 @@ export default class ServerStatus {
           const buf = Buffer.concat([bufWriter.writeByte(0xfe), bufWriter.writeByte(1)])
           socket.write(buf)
         } else {
-          reject(new EMLCoreError(ErrorType.NET_ERROR, 'Unsupported protocol version'))
+          reject(new EMLLibError(ErrorType.NET_ERROR, 'Unsupported protocol version'))
         }
       })
 
@@ -125,12 +125,12 @@ export default class ServerStatus {
               socket.destroy()
               clearTimeout(timeout)
             } catch (err) {
-              reject(new EMLCoreError(ErrorType.NET_ERROR, `Received invalid response: ${err}`))
+              reject(new EMLLibError(ErrorType.NET_ERROR, `Received invalid response: ${err}`))
               socket.destroy()
               clearTimeout(timeout)
             }
           } else {
-            reject(new EMLCoreError(ErrorType.NET_ERROR, `Received unexpected packet`))
+            reject(new EMLLibError(ErrorType.NET_ERROR, `Received unexpected packet`))
             socket.destroy()
             clearTimeout(timeout)
           }
@@ -140,7 +140,7 @@ export default class ServerStatus {
             const fields = bufReader.readStringUTF16BE().split('\u0000')
 
             if (fields[0] !== '§1') {
-              reject(new EMLCoreError(ErrorType.NET_ERROR, `Received invalid response: the first field is not '§1'`))
+              reject(new EMLLibError(ErrorType.NET_ERROR, `Received invalid response: the first field is not '§1'`))
               socket.destroy()
               clearTimeout(timeout)
             }
@@ -154,14 +154,14 @@ export default class ServerStatus {
             socket.destroy()
             clearTimeout(timeout)
           } else {
-            reject(new EMLCoreError(ErrorType.NET_ERROR, `Received invalid response: wrong packet identifier`))
+            reject(new EMLLibError(ErrorType.NET_ERROR, `Received invalid response: wrong packet identifier`))
             socket.destroy()
             clearTimeout(timeout)
           }
         }
       })
 
-      socket.on('error', (err) => reject(new EMLCoreError(ErrorType.NET_ERROR, err)))
+      socket.on('error', (err) => reject(new EMLLibError(ErrorType.NET_ERROR, err)))
     })
   }
 }

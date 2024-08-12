@@ -1,5 +1,5 @@
 {
-  "name": "eml-core",
+  "name": "eml-lib",
   "version": "2.0.0-alpha.1",
   "description": "Create your Electron Minecraft Launcher easily!",
   "author": "GoldFrite",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Electron-Minecraft-Launcher/EML-Core-v2.git"
+    "url": "git+https://github.com/Electron-Minecraft-Launcher/EML-Lib-v2.git"
   },
   "keywords": [
     "electron",
@@ -22,9 +22,9 @@
     "mods"
   ],
   "bugs": {
-    "url": "https://github.com/Electron-Minecraft-Launcher/EML-Core-v2/issues"
+    "url": "https://github.com/Electron-Minecraft-Launcher/EML-Lib-v2/issues"
   },
-  "homepage": "https://github.com/Electron-Minecraft-Launcher/EML-Core-v2#readme",
+  "homepage": "https://github.com/Electron-Minecraft-Launcher/EML-Lib-v2#readme",
   "dependencies": {
     "@electron/remote": "^2.1.2",
     "adm-zip": "^0.5.14",

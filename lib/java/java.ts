@@ -11,7 +11,7 @@ import path_ from 'path'
 import Downloader from '../utils/downloader'
 import utils from '../utils/utils'
 import { spawnSync } from 'child_process'
-import { EMLCoreError, ErrorType } from '../../types/errors'
+import { EMLLibError, ErrorType } from '../../types/errors'
 import { MinecraftManifest } from '../../types/manifest'
 
 /**
@@ -114,7 +114,7 @@ export default class Java extends EventEmitter<DownloaderEvents & JavaEvents> {
     arch: '64-bit' | '32-bit'
   } {
     const check = spawnSync(`"${absolutePath.replace('${X}', majorVersion + '')}"`, ['-version'], { shell: true })
-    if (check.error) throw new EMLCoreError(ErrorType.JAVA_ERROR, `Java is not correctly installed: ${check.error.message}`)
+    if (check.error) throw new EMLLibError(ErrorType.JAVA_ERROR, `Java is not correctly installed: ${check.error.message}`)
     const res = {
       version:
         check.output

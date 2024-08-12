@@ -3,7 +3,7 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { EMLCoreError, ErrorType } from '../../types/errors'
+import { EMLLibError, ErrorType } from '../../types/errors'
 import path_ from 'path'
 import fs from 'fs'
 import crypto from 'crypto'
@@ -18,7 +18,7 @@ class Utils {
     if (process.platform === 'win32') return 'win'
     if (process.platform === 'darwin') return 'mac'
     if (process.platform === 'linux') return 'lin'
-    throw new EMLCoreError(ErrorType.UNKNOWN_OS, 'Unknown operating system')
+    throw new EMLLibError(ErrorType.UNKNOWN_OS, 'Unknown operating system')
   }
 
   /**
@@ -29,7 +29,7 @@ class Utils {
     if (process.platform === 'win32') return 'windows'
     if (process.platform === 'darwin') return 'osx'
     if (process.platform === 'linux') return 'linux'
-    throw new EMLCoreError(ErrorType.UNKNOWN_OS, 'Unknown operating system')
+    throw new EMLLibError(ErrorType.UNKNOWN_OS, 'Unknown operating system')
   }
 
   /**
@@ -39,17 +39,17 @@ class Utils {
   getArch() {
     if (process.arch.includes('64')) return '64'
     if (process.arch.includes('32')) return '32'
-    throw new EMLCoreError(ErrorType.UNKNOWN_OS, 'Unknown architecture')
+    throw new EMLLibError(ErrorType.UNKNOWN_OS, 'Unknown architecture')
   }
 
   /**
-   * Get the current architecture Minecraft-core.
+   * Get the current architecture Minecraft-code.
    * @returns The architecture (`'x64'` or `'x86'`).
    */
   getArch_MCCode() {
     if (process.arch.includes('64')) return 'x64'
     if (process.arch.includes('32')) return 'x86'
-    throw new EMLCoreError(ErrorType.UNKNOWN_OS, 'Unknown architecture')
+    throw new EMLLibError(ErrorType.UNKNOWN_OS, 'Unknown architecture')
   }
 
   getOSVersion() {
@@ -97,7 +97,7 @@ class Utils {
       const fileHash = fs.readFileSync(filePath)
       return crypto.createHash('sha1').update(fileHash).digest('hex')
     } catch (err) {
-      throw new EMLCoreError(ErrorType.HASH_ERROR, `Error while getting hash of the file ${filePath}: ${err}`)
+      throw new EMLLibError(ErrorType.HASH_ERROR, `Error while getting hash of the file ${filePath}: ${err}`)
     }
   }
 

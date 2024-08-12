@@ -4,9 +4,9 @@
  */
 
 /**
- * The error class for EMLCore.
+ * The error class for EMLLib.
  */
-export class EMLCoreError extends Error {
+export class EMLLibError extends Error {
   code: ErrorCode
   message: any
 

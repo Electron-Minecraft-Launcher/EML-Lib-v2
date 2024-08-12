@@ -10,7 +10,7 @@ import Java from './lib/java/java'
 import Launcher from './lib/launcher/launcher'
 
 /**
- * ## Electron Minecraft Launcher Core
+ * ## Electron Minecraft Launcher Lib
  * ### Create your Electron Minecraft Launcher easily.
  * 
  * ---
@@ -28,9 +28,9 @@ import Launcher from './lib/launcher/launcher'
  *
  * ---
  * 
- * [Docs](https://github.com/Electron-Minecraft-Launcher/EML-Core/wiki) —
- * [GitHub](https://github.com/Electron-Minecraft-Launcher/EML-Core) —
- * [NPM](https://www.npmjs.com/package/eml-core) —
+ * [Docs](https://github.com/Electron-Minecraft-Launcher/EML-Lib/wiki) —
+ * [GitHub](https://github.com/Electron-Minecraft-Launcher/EML-Lib-v2) —
+ * [NPM](https://www.npmjs.com/package/eml-lib) —
  * [EML Website](https://electron-minecraft-launcher.ml)
  *
  * ---
@@ -40,7 +40,7 @@ import Launcher from './lib/launcher/launcher'
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-declare module EMLCore {
+declare module EMLLib {
   export { MicrosoftAuth, AzAuth, CrackAuth, Bootstraps, Maintenance, News, Background, ServerStatus, Java, Launcher }
 }
 
@@ -54,4 +54,4 @@ export { default as Background } from './lib/background/background'
 export { default as ServerStatus } from './lib/serverstatus/serverstatus'
 export { default as Java } from './lib/java/java'
 export { default as Launcher } from './lib/launcher/launcher'
-export default EMLCore
+export default EMLLib

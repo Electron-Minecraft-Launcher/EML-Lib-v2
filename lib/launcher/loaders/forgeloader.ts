@@ -10,7 +10,7 @@ import AdmZip from 'adm-zip'
 import fs from 'fs'
 import path_ from 'path'
 import utils from '../../utils/utils'
-import { EMLCoreError, ErrorType } from '../../../types/errors'
+import { EMLLibError, ErrorType } from '../../../types/errors'
 import EventEmitter from '../../utils/events'
 import { FilesManagerEvents } from '../../../types/events'
 
@@ -198,6 +198,6 @@ export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
       return { url: url, size: res1, sha1: res2 }
     }
 
-    throw new EMLCoreError(ErrorType.FETCH_ERROR, `Error while getting mirror URL for the library ${lib}`)
+    throw new EMLLibError(ErrorType.FETCH_ERROR, `Error while getting mirror URL for the library ${lib}`)
   }
 }

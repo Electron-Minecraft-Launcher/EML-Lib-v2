@@ -1,6 +1,6 @@
-# Electron Minecraft Launcher Core (EML Core)
+# Electron Minecraft Launcher Lib (EML Lib)
 
-**Electron Minecraft Launcher Core (EML Core) is an Electron library. It permits to authenticate, download Java and Minecraft and launch Minecraft.**
+**Electron Minecraft Launcher Lib (EML Lib) is a Node.js library. It permits to authenticate, download Java and Minecraft and launch Minecraft.**
 
 [<p align="center"><img src="https://img.shields.io/badge/Discord-Electron_Minecraft_Launcher-5561e6?&style=for-the-badge">](https://discord.gg/YVB4k6HzAY)
 [<img src="https://img.shields.io/badge/platforms-Windows%2C%20macOS%2C%20Linux-0077DA?style=for-the-badge&color=0077DA">](#platforms)
@@ -44,34 +44,34 @@ To get all the capacities of this Node.js library, you must set up your [EML Adm
 
 If you don't want to use the EML AdminTool, you should rather use the [Minecraft Launcher Core](https://npmjs.com/package/minecraft-launcher-core) library.
 
-### EML Core installation
+### EML Lib installation
 
 You need [Node.js](https://nodejs.org) and [Electron](https://electronjs.org).
 
 ```bash
 # Using npm
-npm i emlcore
+npm i eml-lib
 ```
 
-`emlcore` package includes TypeScript typings, so you don't need to install `@types/emlcore`.
+`eml-lib` package includes TypeScript typings, so you don't need to install `@types/eml-lib`.
 
 ### Quick start
 
 Quick start using the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2):
 
 ```javascript
-const EMLCore = require('emlcore')
+const EMLLib = require('eml-lib')
 
-const launcher = new EMLCore.Launcher({
+const launcher = new EMLLib.Launcher({
   url: 'https://admintool.electron-minecraft-launcher.com',
   serverId: 'eml',
-  account: new EMLCore.CrackAuth().auth('GoldFrite')
+  account: new EMLLib.CrackAuth().auth('GoldFrite')
 })
 
 launcher.launch()
 ```
 
-Please refer to the [documentation](https://github.com/Electrn-Minecraft-Launcher/EML-Core-v2/wiki) for more information.
+Please refer to the [documentation](https://github.com/Electrn-Minecraft-Launcher/EML-Lib-v2/wiki) for more information.
 
 ## Tests
 
@@ -95,7 +95,7 @@ The library have been tested on:
 Download the code and run the commands:
 
 ```bash
-cd EML-Core-v2
+cd EML-Lib-v2
 npm i
 ```
 

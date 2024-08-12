@@ -4,7 +4,7 @@
  */
 
 import { Account } from '../../types/account'
-import { EMLCoreError, ErrorType } from './../../types/errors'
+import { EMLLibError, ErrorType } from './../../types/errors'
 import { v4 } from 'uuid'
 
 /**
@@ -28,7 +28,7 @@ export default class CrackAuth {
         }
       }
     } else {
-      throw new EMLCoreError(ErrorType.AUTH_ERROR, 'Invalid username')
+      throw new EMLLibError(ErrorType.AUTH_ERROR, 'Invalid username')
     }
   }
 }
