@@ -7,7 +7,7 @@ export interface Account {
   userProperties?: any
   meta: {
     online: boolean
-    type: 'Mojang' | 'Xbox' | 'Azuriom' | 'Crack'
+    type: 'msa' | 'azuriom' | 'crack'
   }
   xbox?: {
     xuid: string

@@ -1,7 +1,7 @@
 export interface MinecraftManifest {
   arguments?: {
-    game: string[]
-    jvm: any[]
+    game: (string | Argument)[]
+    jvm: (string | Argument)[]
   }
   assetIndex: {
     id: string
@@ -98,4 +98,9 @@ export interface Assets {
       size: number
     }
   }
+}
+
+export interface Argument {
+  rules: { action: 'allow' | 'disallow'; features: { [key: string]: boolean } }[]
+  value: string | string[]
 }

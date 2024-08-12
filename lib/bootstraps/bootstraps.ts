@@ -6,7 +6,7 @@
 import Downloader from '../utils/downloader'
 import utils from '../utils/utils'
 import EventEmitter from '../utils/events'
-import path from 'path'
+import path_ from 'path'
 import { spawnSync } from 'child_process'
 import { EMLCoreError, ErrorType } from '../../types/errors'
 import { Bootstraps as Bootstraps_ } from '../../types/bootstraps'
@@ -62,7 +62,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
       throw new EMLCoreError(ErrorType.FILE_ERROR, 'Not available for this operating system')
     }
 
-    const downloadPath = path.join(utils.getTempFolder(), bootstrap.path, bootstrap.name)
+    const downloadPath = path_.join(utils.getTempFolder(), bootstrap.path, bootstrap.name)
     const downloader = new Downloader(utils.getTempFolder())
 
     downloader.forwardEvents(this)

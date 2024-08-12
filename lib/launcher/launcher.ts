@@ -3,19 +3,23 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { CleanerEvents, DownloaderEvents, FilesManagerEvents, LauncherEvents } from '../../types/events'
+import { CleanerEvents, DownloaderEvents, FilesManagerEvents, JavaEvents, LauncherEvents, PatcherEvents } from '../../types/events'
 import EventEmitter from '../utils/events'
 import manifests from '../utils/manifests'
 import utils from '../utils/utils'
 import { Config, FullConfig } from './../../types/config'
-import path from 'path'
+import path_ from 'path'
 import FilesManager from './filesmanager'
 import Downloader from '../utils/downloader'
 import Cleaner from '../utils/cleaner'
 import Java from '../java/java'
 import LoaderManager from './loadermanager'
+import ArgumentsManager from './argumentsmanager'
+import { spawn } from 'child_process'
 
-export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEvents & CleanerEvents & FilesManagerEvents> {
+export default class Launcher extends EventEmitter<
+  LauncherEvents & DownloaderEvents & CleanerEvents & FilesManagerEvents & JavaEvents & PatcherEvents
+> {
   private config: FullConfig
 
   /**
@@ -24,17 +28,20 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
   constructor(config: Config) {
     super()
 
-    config.ignored = config.ignored || [
-      'runtime/',
-      'crash-reports/',
-      'logs/',
-      'resourcepacks/',
-      'resources/',
-      'saves/',
-      'shaderpacks/',
-      'options.txt',
-      'optionsof.txt'
-    ]
+    config.cleaning = {
+      clean: config.cleaning?.clean === true,
+      ignored: config.cleaning?.ignored || [
+        'runtime/',
+        'crash-reports/',
+        'logs/',
+        'resourcepacks/',
+        'resources/',
+        'saves/',
+        'shaderpacks/',
+        'options.txt',
+        'optionsof.txt'
+      ]
+    }
     config.minecraft = {
       version: config.minecraft?.version ? config.minecraft?.version : config.url ? null : 'latest_release',
       args: config.minecraft?.args || []
@@ -44,8 +51,8 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
       absolutePath: config.java?.absolutePath
         ? config.java.absolutePath
         : config.java?.relativePath
-          ? path.join(utils.getServerFolder(config.serverId), config.java.relativePath, '/')
-          : path.join(utils.getServerFolder(config.serverId), 'runtime/jre/bin/java'),
+          ? path_.join(utils.getServerFolder(config.serverId), config.java.relativePath, '/')
+          : path_.join(utils.getServerFolder(config.serverId), 'runtime', 'jre-${X}', 'bin', 'java'),
       args: config.java?.args || []
     }
     config.window = {
@@ -61,6 +68,9 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
     this.config = { ...(config as FullConfig), root: utils.getServerFolder(config.serverId) }
   }
 
+  /**
+   * Launch Minecraft.
+   */
   async launch() {
     //* Init launch
     const manifest = await manifests.getMinecraftManifest(this.config.minecraft.version, this.config.url)
@@ -69,8 +79,9 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
 
     const filesManager = new FilesManager(this.config, manifest, loader)
     const loaderManager = new LoaderManager(this.config, manifest, loader)
-    const downloader = new Downloader(utils.getServerFolder(this.config.serverId))
-    const cleaner = new Cleaner(utils.getServerFolder(this.config.serverId))
+    const argumentsManager = new ArgumentsManager(this.config, manifest)
+    const downloader = new Downloader(this.config.root)
+    const cleaner = new Cleaner(this.config.root)
     const java = new Java(manifest.id, this.config.serverId)
 
     filesManager.forwardEvents(this)
@@ -86,12 +97,20 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
     const modpackFiles = await filesManager.getModpack()
     const librariesFiles = await filesManager.getLibraries()
     const assetsFiles = await filesManager.getAssets()
+    const log4jFiles = await filesManager.getLog4j()
 
-    const javaFilesToDownload = downloader.getFilesToDownload(javaFiles)
-    const modpackFilesToDownload = downloader.getFilesToDownload(modpackFiles)
-    const librariesFilesToDownload = downloader.getFilesToDownload(librariesFiles)
-    const assetsFilesToDownload = downloader.getFilesToDownload(assetsFiles)
-    const filesToDownload = [...javaFilesToDownload, ...modpackFilesToDownload, ...librariesFilesToDownload, ...assetsFilesToDownload]
+    const javaFilesToDownload = downloader.getFilesToDownload(javaFiles.java)
+    const modpackFilesToDownload = downloader.getFilesToDownload(modpackFiles.modpack)
+    const librariesFilesToDownload = downloader.getFilesToDownload(librariesFiles.libraries)
+    const assetsFilesToDownload = downloader.getFilesToDownload(assetsFiles.assets)
+    const log4jFilesToDownload = downloader.getFilesToDownload(log4jFiles.log4j)
+    const filesToDownload = [
+      ...javaFilesToDownload,
+      ...modpackFilesToDownload,
+      ...librariesFilesToDownload,
+      ...assetsFilesToDownload,
+      ...log4jFilesToDownload
+    ]
 
     //* Download
     this.emit('launch_download', { total: { amount: filesToDownload.length, size: filesToDownload.reduce((acc, file) => acc + file.size!, 0) } })
@@ -99,44 +118,65 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
     await downloader.download(javaFilesToDownload, true)
     await downloader.download(modpackFilesToDownload, true)
     await downloader.download(librariesFilesToDownload, true)
-    await downloader.download(filesToDownload, true)
+    await downloader.download(assetsFilesToDownload, true)
+    await downloader.download(log4jFilesToDownload, true)
 
     //* Install loader
     this.emit('launch_install_loader', loader)
 
     const loaderFiles = loaderManager.setupLoader()
+    await downloader.download(loaderFiles.libraries)
 
     //* Extract natives
     this.emit('launch_extract_natives')
 
-    const extractedNatives = filesManager.extractNatives(librariesFiles)
+    const extractedNatives = filesManager.extractNatives([...librariesFiles.libraries, ...loaderFiles.libraries])
+
+    //* Copy assets
+    this.emit('launch_copy_assets')
+
     const copiedAssets = filesManager.copyAssets()
 
     //* Check Java
     this.emit('launch_check_java')
 
-    java.check(this.config.java.absolutePath)
+    const javaInfo = java.check(this.config.java.absolutePath, manifest.javaVersion?.majorVersion || 8)
+
+    //* Path loader
+    this.emit('launch_patch_loader')
+
+    const patchedFiles = loaderManager.patchLoader(loaderFiles.installProfile)
 
     //* Clean
     this.emit('launch_clean')
 
-    const files = [...javaFiles, ...modpackFiles, ...librariesFiles, ...assetsFiles, ...extractedNatives, ...copiedAssets]
-    const ignore = [...this.config.ignored, `versions/${manifest.id}/${manifest.id}.json`, `assets/indexes/${manifest.id}.json`]
-    cleaner.clean(files, ignore)
-
-    const versionDirectory = path.join(this.config.root, 'versions', manifest.id)
-    const clientJarPath = path.join(versionDirectory, `${manifest.id}.jar`)
-    const nativeDirectory = path.join(versionDirectory, 'natives')
-
-    const args = []
-    const jvm = [
-      '-XX:-UseAdaptiveSizePolicy',
-      '-XX:-OmitStackTraceInFastThrow',
-      '-Dfml.ignorePatchDiscrepancies=true',
-      '-Dfml.ignoreInvalidMinecraftCertificates=true',
-      `-Djava.library.path=${nativeDirectory}`,
-      `-Xmx${this.config.memory.max}M`,
-      `-Xms${this.config.memory.min}M`
+    const files = [
+      ...javaFiles.files,
+      ...modpackFiles.files,
+      ...librariesFiles.files,
+      ...assetsFiles.files,
+      ...log4jFiles.files,
+      ...extractedNatives.files,
+      ...copiedAssets.files,
+      ...loaderFiles.files,
+      ...patchedFiles.files
     ]
+    cleaner.clean(files, this.config.cleaning.ignored, !this.config.cleaning.clean)
+
+    //* Launch
+    this.emit('launch_launch', { version: manifest.id, loader: loader.loader, loaderVersion: loader.loader_version })
+
+    const args = argumentsManager.getArgs([...librariesFiles.files, ...loaderFiles.libraries], loaderFiles.loaderManifest)
+
+    this.emit('launch_debug', `Launching Minecraft with args: ${args.join(' ')}`)
+
+    this.run(this.config.java.absolutePath.replace('${X}', manifest.javaVersion?.majorVersion + '' || '8'), args)
+  }
+
+  private async run(javaPath: string, args: string[]) {
+    const minecraft = spawn(javaPath, args, { cwd: this.config.root, detached: true })
+    minecraft.stdout.on('data', (data: Buffer) => this.emit('launch_data', data.toString('utf8').replace(/\n$/, '')))
+    minecraft.stderr.on('data', (data: Buffer) => this.emit('launch_data', data.toString('utf8').replace(/\n$/, '')))
+    minecraft.on('close', (code) => this.emit('launch_close', code || 0))
   }
 }

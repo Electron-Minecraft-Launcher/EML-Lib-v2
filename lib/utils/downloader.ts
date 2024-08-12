@@ -5,17 +5,17 @@
 
 import { File } from '../../types/file'
 import fs from 'fs'
-import path from 'path'
+import path_ from 'path'
 import fetch from 'node-fetch'
 import EventEmitter from '../utils/events'
 import { DownloaderEvents } from '../../types/events'
 import utils from './utils'
 
 export default class Downloader extends EventEmitter<DownloaderEvents> {
+  private dest: string
   private size: number = 0
-  private dest: string = ''
   private downloaded: { amount: number; size: number } = { amount: 0, size: 0 }
-  private errors: number = 0
+  private error: boolean = false
   private speed: number = 0
   private eta: number = 0
   private history: { size: number; time: number }[] = []
@@ -25,19 +25,25 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
    */
   constructor(dest: string) {
     super()
-    this.dest = path.join(dest)
+    this.dest = path_.join(dest)
   }
 
   /**
    * Download files from the list.
    * @param files List of files to download. This list must include folders.
-   * @param skipFileExists Skip files that already exist in the destination folder (force to
+   * @param skipCheck Skip files that already exist in the destination folder (force to
    * download all files).
    */
-  async download(files: File[], skipFileExists: boolean = false): Promise<void> {
-    const filesToDownload: File[] = !skipFileExists ? this.getFilesToDownload(files) : files
+  async download(files: File[], skipCheck: boolean = false): Promise<void> {
+    const filesToDownload: File[] = !skipCheck ? this.getFilesToDownload(files) : files
 
+    this.size = 0
     this.size = filesToDownload.reduce((acc, curr) => acc + (curr.size || 0), 0)
+    this.downloaded = { amount: 0, size: 0 }
+    this.error = false
+    this.speed = 0
+    this.eta = 0
+    this.history = []
     if (this.size === 0) {
       this.emit('download_end', { downloaded: this.downloaded })
       return
@@ -62,10 +68,10 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
     let filesToDownload: File[] = []
     
     files.forEach((file) => {
-      const filePath = path.join(this.dest, file.path, file.name)
+      const filePath = path_.join(this.dest, file.path, file.name)
       if (file.type === 'FOLDER') {
-        if (!fs.existsSync(path.join(this.dest, file.path, file.name))) {
-          fs.mkdirSync(path.join(this.dest, file.path, file.name), { recursive: true })
+        if (!fs.existsSync(filePath)) {
+          fs.mkdirSync(filePath, { recursive: true })
         }
       } else if (!fs.existsSync(filePath) || file.sha1 !== utils.getFileHash(filePath)) {
         filesToDownload.push(file)
@@ -77,8 +83,10 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
 
   private async downloadFile(files: File[], i: number, t = 0) {
     const file = files[i]
-    const dirPath = path.join(this.dest, file.path)
-    const filePath = path.join(dirPath, file.name)
+    const dirPath = path_.join(this.dest, file.path)
+    const filePath = path_.join(dirPath, file.name)
+
+    if (this.error) return
 
     try {
       if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true })
@@ -96,6 +104,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
           type: file.type,
           message: res.statusText
         })
+        this.error = true
         return
       }
       if (!res.body) {
@@ -108,6 +117,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
           type: file.type,
           message: 'No body'
         })
+        this.error = true
         return
       }
 
@@ -139,19 +149,19 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
         })
 
         res.body.on('error', (err) => {
-          this.errors++
           stream.destroy()
           this.emit('download_error', {
             filename: file.name,
             type: file.type,
             message: err
           })
+          this.error = true
           reject(err)
         })
 
         res.body.on('end', (val) => {
           this.downloaded.amount++
-          if (this.downloaded.amount + this.errors === files.length) {
+          if (this.downloaded.amount === files.length) {
             this.emit('download_end', { downloaded: this.downloaded })
           } else if (i + 5 < files.length) {
             this.downloadFile(files, i + 5)
@@ -170,6 +180,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
         type: file.type,
         message: error
       })
+      this.error = true
       return
     }
   }

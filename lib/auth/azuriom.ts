@@ -53,7 +53,7 @@ export default class AzAuth {
       userProperties: {},
       meta: {
         online: false,
-        type: 'Azuriom'
+        type: 'azuriom'
       }
     }
   }
@@ -86,7 +86,7 @@ export default class AzAuth {
       userProperties: {},
       meta: {
         online: false,
-        type: 'Azuriom'
+        type: 'azuriom'
       }
     }
   }

@@ -16,8 +16,9 @@ import Launcher from './lib/launcher/launcher'
  * ---
  *
  * **Requirements:**
- * - Node.js 15.14.0 or higher: see [Node.js](https://nodejs.org/)
- * - Electron 15.0.0 or higher: please install it with `npm install electron`
+ * - Node.js 15.14.0 or higher: see [Node.js](https://nodejs.org/);
+ * - Electron 15.0.0 or higher: please install it with `npm install electron` _if you use 
+ * Microsoft Authentication_.
  * 
  * **Recommandations:** 
  * - To get all the capacities of this Node.js library, you must set up your

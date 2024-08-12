@@ -19,10 +19,15 @@ export interface LauncherEvents {
       loader_type?: 'installer' | 'universal' | 'client'
     }
   ]
+  launch_copy_assets: []
   launch_extract_natives: []
+  launch_patch_loader: []
   launch_check_java: []
   launch_clean: []
+  launch_launch: [{ version: string; loader: 'vanilla' | 'forge', loaderVersion: string | null }]
   launch_debug: [string]
+  launch_data: [string]
+  launch_close: [number]
 }
 
 export interface FilesManagerEvents {
@@ -31,6 +36,10 @@ export interface FilesManagerEvents {
   copy_debug: [string]
   copy_progress: [{ filename: string; dest: string }]
   copy_end: [{ amount: number }]
+}
+
+export interface JavaEvents {
+  java_info: [{ version: string; arch: '32-bit' | '64-bit' }]
 }
 
 export interface DownloaderEvents {
@@ -53,4 +62,10 @@ export interface DownloaderEvents {
 export interface CleanerEvents {
   clean_progress: [{ filename: string }]
   clean_end: [{ amount: number }]
+}
+
+export interface PatcherEvents {
+  patch_progress: [{ filename: string }]
+  patch_error: [{ filename: string; message: Error | string }]
+  patch_end: [{ amount: number }]
 }

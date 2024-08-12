@@ -4,9 +4,8 @@
  */
 
 import EventEmitter from './events'
-import path from 'path'
+import path_ from 'path'
 import fs from 'fs'
-import utils from './utils'
 import { CleanerEvents } from '../../types/events'
 import { File } from '../../types/file'
 
@@ -19,24 +18,27 @@ export default class Cleaner extends EventEmitter<CleanerEvents> {
    */
   constructor(dest: string) {
     super()
-    this.dest = path.join(dest)
+    this.dest = path_.join(dest)
   }
 
   /**
    * Clean the destination folder by removing files that are not in the list.
    * @param files List of files to check ('ok' files; files that should be in the destination folder).
    * @param ignore List of files to ignore (don't delete them).
+   * @param skipClean [Optional: default is `false`] Skip the cleaning process (skip this method).
    */
-  clean(files: File[], ignore: string[] = []) {
+  clean(files: File[], ignore: string[] = [], skipClean: boolean = false) {
+    if (skipClean) return 
+
     let i = 0
     this.browsed = []
     this.browse(this.dest)
 
     this.browsed.forEach((file) => {
-      const fullPath = path.join(file.path, file.name)
+      const fullPath = path_.join(file.path, file.name)
       if (
-        !files.find((f) => path.join(this.dest, f.path, f.name) === fullPath) &&
-        !ignore.find((ig) => fullPath.startsWith(path.join(this.dest, ig)))
+        !files.find((f) => path_.join(this.dest, f.path, f.name) === fullPath) &&
+        !ignore.find((ig) => fullPath.startsWith(path_.join(this.dest, ig)))
       ) {
         fs.unlinkSync(fullPath)
         i++
@@ -54,8 +56,8 @@ export default class Cleaner extends EventEmitter<CleanerEvents> {
     const files = fs.readdirSync(dir)
 
     files.forEach((file) => {
-      if (fs.statSync(path.join(dir, file)).isDirectory()) {
-        this.browse(path.join(dir, file))
+      if (fs.statSync(path_.join(dir, file)).isDirectory()) {
+        this.browse(path_.join(dir, file))
       } else {
         this.browsed.push({
           name: file,

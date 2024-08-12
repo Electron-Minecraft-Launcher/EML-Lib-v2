@@ -28,35 +28,53 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
     this.loader = loader
   }
 
+  /**
+   * Get Java files.
+   * @returns `java`: Java files; `files`: all files created by the method or that will be created
+   * (including `java`).
+   */
   async getJava() {
     if (this.config.java.install === 'auto') {
-      const java = await new Java(this.manifest.id, this.config.serverId).getFiles()
-      return java
+      const java = await new Java(this.manifest.id, this.config.serverId).getFiles(this.manifest)
+      return { java: java, files: java }
     } else {
-      return []
+      return { java: [], files: [] }
     }
   }
 
+  /**
+   * Get modpack files.
+   * @returns `modpack`: Modpack files; `files`: all files created by this method or that will be
+   * created (including `modpack`).
+   */
   async getModpack() {
-    if (!this.config.url) return []
+    if (!this.config.url) return { modpack: [], files: [] }
 
-    const res = await fetch(`${this.config.url}/api/files-updater`)
+    const modpack = await fetch(`${this.config.url}/api/files-updater`)
       .then((res) => res.json())
+      .then((res) => res.data as File[])
       .catch((err) => {
         throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch modpack files: ${err}`)
       })
 
-    return res.data as File[]
+    return { modpack: modpack, files: modpack }
   }
 
+  /**
+   * Get libraries files.
+   * @returns `libraries`: Libraries files; `files`: all files created by this method or that will
+   * be created (including `libraries`).
+   */
   async getLibraries() {
-    if (!fs.existsSync(path_.join(this.config.root, `versions/${this.manifest.id}`))) {
-      fs.mkdirSync(path_.join(this.config.root, `versions/${this.manifest.id}`), { recursive: true })
+    let libraries: File[] = []
+    let files: File[] = []
+
+    if (!fs.existsSync(path_.join(this.config.root, 'versions', this.manifest.id))) {
+      fs.mkdirSync(path_.join(this.config.root, 'versions', this.manifest.id), { recursive: true })
     }
 
-    fs.writeFileSync(path_.join(this.config.root, `versions/${this.manifest.id}/${this.manifest.id}.json`), JSON.stringify(this.manifest, null, 2))
-
-    let libraries: File[] = []
+    files.push({ name: `${this.manifest.id}.json`, path: path_.join('versions', this.manifest.id, '/'), url: '', type: 'OTHER' })
+    fs.writeFileSync(path_.join(this.config.root, 'versions', this.manifest.id, `${this.manifest.id}.json`), JSON.stringify(this.manifest, null, 2))
 
     this.manifest.libraries.forEach((lib) => {
       let type: 'LIBRARY' | 'NATIVE'
@@ -79,8 +97,8 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
 
       if (artifact) {
         if (artifact.path) {
-          name = artifact.path.split('/').pop()!
-          path = path_.join('libraries', artifact.path.split('/').slice(0, -1).join('/'), '/')
+          name = path_.basename(artifact.path)
+          path = path_.join('libraries', path_.dirname(artifact.path), '/')
         } else {
           name = utils.getLibraryName(lib.name!)
           path = utils.getLibraryPath(lib.name!, 'libraries')
@@ -99,7 +117,7 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
 
     libraries.push({
       name: `${this.manifest.id}.jar`,
-      path: path_.join(`versions/${this.manifest.id}/`),
+      path: path_.join('versions', this.manifest.id, '/'),
       url: this.manifest.downloads.client.url,
       sha1: this.manifest.downloads.client.sha1,
       size: this.manifest.downloads.client.size,
@@ -110,28 +128,37 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
       libraries.push(this.loader.file)
     }
 
-    return libraries
+    files.push(...libraries)
+
+    return { libraries, files }
   }
 
+  /**
+   * Get assets files.
+   * @returns `assets`: Assets files; `files`: all files created by this method or that will be
+   * created (including `assets`).
+   */
   async getAssets() {
+    let assets: File[] = []
+    let files: File[] = []
+
     const res = await fetch(this.manifest.assetIndex.url)
       .then((res) => res.json() as Promise<Assets>)
       .catch((err) => {
         throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch assets: ${err}`)
       })
 
-    if (!fs.existsSync(path_.join(this.config.root, 'assets/indexes'))) {
-      fs.mkdirSync(path_.join(this.config.root, 'assets/indexes'), { recursive: true })
+    if (!fs.existsSync(path_.join(this.config.root, 'assets', 'indexes'))) {
+      fs.mkdirSync(path_.join(this.config.root, 'assets', 'indexes'), { recursive: true })
     }
 
-    fs.writeFileSync(path_.join(this.config.root, `assets/indexes/${this.manifest.id}.json`), JSON.stringify(res, null, 2))
-
-    let assets: File[] = []
+    files.push({ name: `${this.manifest.assets}.json`, path: path_.join('assets', 'indexes', '/'), url: '', type: 'OTHER' })
+    fs.writeFileSync(path_.join(this.config.root, 'assets', 'indexes', `${this.manifest.assets}.json`), JSON.stringify(res, null, 2))
 
     Object.values(res.objects).forEach((asset) => {
       assets.push({
         name: asset.hash,
-        path: path_.join(`assets/objects/${asset.hash.substring(0, 2)}/`),
+        path: path_.join('assets', 'objects', asset.hash.substring(0, 2), '/'),
         url: `https://resources.download.minecraft.net/${asset.hash.substring(0, 2)}/${asset.hash}`,
         sha1: asset.hash,
         size: asset.size,
@@ -139,16 +166,53 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
       })
     })
 
-    return assets
+    files.push(...assets)
+
+    return { assets, files }
   }
 
+  /**
+   * Get log4j files to patch the log4shell vulnerability.
+   * @returns `log4j`: Log4j files; `files`: all files created by this method or that will be
+   * created (including `log4j`).
+   * @see [help.minecraft.net](https://help.minecraft.net/hc/en-us/articles/4416199399693-Security-Vulnerability-in-Minecraft-Java-Edition)
+   */
+  async getLog4j() {
+    let log4j: File[] = []
+    if (+this.manifest.id.split('.')[1] <= 16 && +this.manifest.id.split('.')[1] >= 12) {
+      log4j.push({
+        name: 'log4j2_112-116.xml',
+        path: '',
+        url: 'https://launcher.mojang.com/v1/objects/02937d122c86ce73319ef9975b58896fc1b491d1/log4j2_112-116.xml',
+        sha1: '02937d122c86ce73319ef9975b58896fc1b491d1',
+        size: 4096,
+        type: 'CONFIG'
+      })
+    } else if (+this.manifest.id.split('.')[1] <= 11 && +this.manifest.id.split('.')[1] >= 7) {
+      log4j.push({
+        name: 'log4j2_17-111.xml',
+        path: '',
+        url: 'https://launcher.mojang.com/v1/objects/4bb89a97a66f350bc9f73b3ca8509632682aea2e/log4j2_17-111.xml',
+        sha1: '4bb89a97a66f350bc9f73b3ca8509632682aea2e',
+        size: 4096,
+        type: 'CONFIG'
+      })
+    }
+    return { log4j: log4j, files: log4j }
+  }
+
+  /**
+   * Extract natives from libraries.
+   * @param libraries Libraries to extract natives from.
+   * @returns `files`: all files created by this method.
+   */
   extractNatives(libraries: File[]) {
     const natives = libraries.filter((lib) => lib.type === 'NATIVE')
-    const nativesFolder = path_.join(this.config.root, `versions/${this.manifest.id}/natives`)
-    let extracted: File[] = []
+    const nativesFolder = path_.join(this.config.root, 'bin', 'natives')
+    let files: File[] = []
 
     if (!fs.existsSync(nativesFolder)) {
-      fs.mkdirSync(nativesFolder)
+      fs.mkdirSync(nativesFolder, { recursive: true })
     }
 
     natives.forEach((native) => {
@@ -161,9 +225,9 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
             fs.writeFileSync(`${nativesFolder}/${entry.entryName}`, zip.readFile(entry)!)
           }
 
-          extracted.push({
-            name: path_.join(entry.entryName).replaceAll('\\', '/').split('/').pop()!,
-            path: path_.join(`versions/${this.manifest.id}/natives/${entry.entryName}`.replaceAll('\\', '/').split('/').slice(0, -1).join('/'), '/'),
+          files.push({
+            name: path_.basename(entry.entryName),
+            path: path_.join('bin', 'natives', path_.dirname(entry.entryName), '/'),
             url: '',
             sha1: '',
             size: entry.header.size,
@@ -175,24 +239,28 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
       this.emit('extract_progress', { filename: native.name })
     })
 
-    this.emit('extract_end', { amount: extracted.length })
+    this.emit('extract_end', { amount: files.length })
 
-    return extracted
+    return { files }
   }
 
+  /**
+   * Copy assets from the assets folder to the resources folder.
+   * @returns `files`: all files created by this method.
+   */
   copyAssets() {
-    let copied: File[] = []
+    let files: File[] = []
 
     if (this.manifest.assets === 'legacy' || this.manifest.assets === 'pre-1.6') {
       if (fs.existsSync(path_.join(this.config.root, 'assets', 'legacy'))) {
         this.emit('copy_debug', "The 'assets/legacy' directory is no longer used. You can safely remove it from your server's root directory.")
       }
 
-      const assets = JSON.parse(fs.readFileSync(path_.join(this.config.root, `assets/indexes/${this.manifest.id}.json`), 'utf-8')) as Assets
+      const assets = JSON.parse(fs.readFileSync(path_.join(this.config.root, 'assets', 'indexes', `${this.manifest.id}.json`), 'utf-8')) as Assets
 
       Object.entries(assets.objects).forEach(([path, { hash, size }]) => {
-        const assetLegacyPath = path_.join('resources', path.split('/').slice(0, -1).join('/'))
-        const assetLegacyName = path.split('/').pop()!
+        const assetLegacyPath = path_.join('resources', path_.dirname(path))
+        const assetLegacyName = path_.basename(path)
 
         if (!fs.existsSync(path_.join(this.config.root, assetLegacyPath))) {
           fs.mkdirSync(path_.join(this.config.root, assetLegacyPath), { recursive: true })
@@ -205,7 +273,7 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
           )
         }
 
-        copied.push({
+        files.push({
           name: assetLegacyName,
           path: assetLegacyPath,
           url: '',
@@ -216,9 +284,9 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
 
         this.emit('copy_progress', { filename: hash, dest: path_.join(assetLegacyPath, assetLegacyName) })
       })
-
-      this.emit('copy_end', { amount: copied.length })
     }
-    return copied
+
+    this.emit('copy_end', { amount: files.length })
+    return { files }
   }
 }

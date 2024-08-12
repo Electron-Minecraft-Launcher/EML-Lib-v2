@@ -164,7 +164,7 @@ export default class MicrosoftAuth {
       userProperties: {},
       meta: {
         online: true,
-        type: 'Xbox'
+        type: 'msa'
       }
     }
   }

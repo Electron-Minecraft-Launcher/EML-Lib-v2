@@ -82,23 +82,26 @@ export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
     this.emit('extract_progress', { filename: 'install_profile.json' })
 
     //* Extract universal
-    const universalName = utils.getLibraryName(installProfile.path)
-    const universalPath = utils.getLibraryPath(installProfile.path)
-    const universalExtractPath = path_.join(this.config.root, 'libraries', universalPath)
-    if (!fs.existsSync(universalExtractPath)) fs.mkdirSync(universalExtractPath, { recursive: true })
 
     if (installProfile.filePath) {
+      const universalName = utils.getLibraryName(installProfile.path)
+      const universalPath = utils.getLibraryPath(installProfile.path)
+      const universalExtractPath = path_.join(this.config.root, 'libraries', universalPath)
+      if (!fs.existsSync(universalExtractPath)) fs.mkdirSync(universalExtractPath, { recursive: true })
       fs.writeFileSync(path_.join(universalExtractPath, universalName), zip.getEntry(installProfile.filePath)!.getData())
       files.push({ name: universalName, path: path_.join('libraries', universalPath), url: '', type: 'LIBRARY' })
       i++
       this.emit('extract_progress', { filename: installProfile.filePath })
     } else if (installProfile.path) {
+      const universalPath = utils.getLibraryPath(installProfile.path)
+      const universalExtractPath = path_.join(this.config.root, 'libraries', universalPath)
+      if (!fs.existsSync(universalExtractPath)) fs.mkdirSync(universalExtractPath, { recursive: true })
       zip
         .getEntries()
         .filter((entry) => entry.entryName.includes(`maven/${universalPath}`))
         .forEach((entry) => {
-          fs.writeFileSync(path_.join(universalExtractPath, entry.entryName.split('/').pop()!), entry.getData())
-          files.push({ name: entry.entryName.split('/').pop()!, path: path_.join('libraries', universalPath), url: '', type: 'LIBRARY' })
+          fs.writeFileSync(path_.join(universalExtractPath, path_.basename(entry.entryName)), entry.getData())
+          files.push({ name: path_.basename(entry.entryName), path: path_.join('libraries', universalPath), url: '', type: 'LIBRARY' })
           i++
           this.emit('extract_progress', { filename: path_.basename(entry.entryName) })
         })

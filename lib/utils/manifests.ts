@@ -36,7 +36,7 @@ class Manifests {
    */
   async getMinecraftManifest(minecraftVersion: string | null = 'latest_release', url?: string) {
     if (!minecraftVersion && url) {
-      minecraftVersion = (await this.getLoaderInfo(url)).minecraft_version
+      minecraftVersion = (await this.getLoaderInfo(null, url)).minecraft_version
     }
 
     const manifestUrl = await this.getMinecraftManifestUrl(minecraftVersion)

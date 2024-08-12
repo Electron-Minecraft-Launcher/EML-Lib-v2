@@ -12,14 +12,17 @@ import fs from 'fs'
 import path_ from 'path'
 import { spawnSync } from 'child_process'
 import { File } from '../../../types/file'
+import EventEmitter from '../../utils/events'
+import { PatcherEvents } from '../../../types/events'
 
-export default class Patcher {
+export default class Patcher extends EventEmitter<PatcherEvents> {
   private config: FullConfig
   private manifest: MinecraftManifest
   private loader: Loader
   private installProfile: any
 
   constructor(config: FullConfig, manifest: MinecraftManifest, loader: Loader, installProfile: any) {
+    super()
     this.config = config
     this.manifest = manifest
     this.loader = loader
@@ -28,29 +31,36 @@ export default class Patcher {
 
   patch() {
     const files = this.isPatched()
-    if (!this.installProfile.processors || this.installProfile.processors.length === 0 || files.patched) return files.files
+    let i = 0
+
+    if (!this.installProfile.processors || this.installProfile.processors.length === 0 || files.patched) {
+      this.emit('patch_end', { amount: i })
+      return files.files
+    }
 
     const processors = this.installProfile.processors
 
-    processors.forEach(async (processor: any) => {
+    processors.forEach((processor: any) => {
       if (processor?.sides && !processor.sides.includes('client')) return
 
       const jarExtractPathName = path_.join(this.config.root, 'libraries', utils.getLibraryPath(processor.jar), utils.getLibraryName(processor.jar))
-      const args = (processor.args as string[]).map(this.mapArg).map(this.mapPath)
+      const args = (processor.args as string[]).map((arg) => this.mapArg(arg)).map((arg) => this.mapPath(arg))
       const classpath = (processor.classpath as string[]).map(
         (cp) => `"${path_.join(this.config.root, 'libraries', utils.getLibraryPath(cp), utils.getLibraryName(cp))}"`
       )
       const mainClass = this.getJarMain(jarExtractPathName)!
 
       const patch = spawnSync(
-        `"${this.config.java.absolutePath}"`,
+        `"${this.config.java.absolutePath.replace('${X}', this.manifest.javaVersion?.majorVersion + '' || '8')}"`,
         ['-classpath', [`"${jarExtractPathName}"`, ...classpath].join(path_.delimiter), mainClass, ...args],
         { shell: true }
       )
 
-      // TODO if (patch.error) this.emit('debug', patch.error)
-      // TODO if (patch.status === 0) this.emit('patch', `Patched ${processor.jar}`)
+      this.emit('patch_progress', { filename: utils.getLibraryName(processor.jar) })
+      i++
     })
+
+    this.emit('patch_end', { amount: i })
 
     return files.files
   }
@@ -96,20 +106,20 @@ export default class Patcher {
   }
 
   private mapArg(arg: string) {
-    arg = arg.replace('{', '').replace('}', '')
+    const argType = arg.replace('{', '').replace('}', '')
 
     const universalMaven = this.installProfile.libraries.find((v: any) => {
       if (this.loader.loader === 'forge') return v.name.startsWith('net.minecraftforge:forge')
     })
 
-    if (this.installProfile.data[arg]) {
-      if (arg === 'BINPATCH') {
+    if (this.installProfile.data[argType]) {
+      if (argType === 'BINPATCH') {
         const clientDataName = utils.getLibraryName(this.installProfile.path || universalMaven.name).replace('.jar', '-clientdata.lzma')
         const clientDataExtractPath = utils.getLibraryPath(this.installProfile.path || universalMaven.name, this.config.root, 'libraries')
         return `"${path_.join(clientDataExtractPath, clientDataName).replace('.jar', '-clientdata.lzma')}"`
       }
 
-      return this.installProfile.data[arg].client as string
+      return this.installProfile.data[argType].client as string
     }
 
     return arg
@@ -123,7 +133,7 @@ export default class Patcher {
 
   private mapPath(arg: string) {
     if (arg.startsWith('[')) {
-      return `"${path_.join(this.config.root, 'libraries', utils.getLibraryPath(arg), utils.getLibraryName(arg.replace('[', '').replace(']', '')))}"`
+      return `"${path_.join(this.config.root, 'libraries', utils.getLibraryPath(arg.replace('[', '').replace(']', '')), utils.getLibraryName(arg.replace('[', '').replace(']', '')))}"`
     }
     return arg
   }

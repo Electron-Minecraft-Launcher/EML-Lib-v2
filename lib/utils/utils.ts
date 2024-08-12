@@ -7,6 +7,7 @@ import { EMLCoreError, ErrorType } from '../../types/errors'
 import path_ from 'path'
 import fs from 'fs'
 import crypto from 'crypto'
+import os from 'os'
 
 class Utils {
   /**
@@ -31,10 +32,28 @@ class Utils {
     throw new EMLCoreError(ErrorType.UNKNOWN_OS, 'Unknown operating system')
   }
 
+  /**
+   * Get the current architecture.
+   * @returns The architecture (`'64'` or `'32'`).
+   */
   getArch() {
     if (process.arch.includes('64')) return '64'
     if (process.arch.includes('32')) return '32'
     throw new EMLCoreError(ErrorType.UNKNOWN_OS, 'Unknown architecture')
+  }
+
+  /**
+   * Get the current architecture Minecraft-core.
+   * @returns The architecture (`'x64'` or `'x86'`).
+   */
+  getArch_MCCode() {
+    if (process.arch.includes('64')) return 'x64'
+    if (process.arch.includes('32')) return 'x86'
+    throw new EMLCoreError(ErrorType.UNKNOWN_OS, 'Unknown architecture')
+  }
+
+  getOSVersion() {
+    return os.release()
   }
 
   /**
@@ -71,7 +90,6 @@ class Utils {
   /**
    * Get the hash of a file.
    * @param filePath Path of the file.
-   * @param algorithm [Optional: default is `'sha1'`] Algorithm to use for the hash.
    * @returns The hash of the file.
    */
   getFileHash(filePath: string) {
@@ -104,7 +122,37 @@ class Utils {
     }
     return true
   }
-  
+
+  /**
+   * Check if a JVM/game argument is allowed for the current operating system.
+   * @param arg The argument to check.
+   * @returns `true` if the argument is allowed, `false` otherwise.
+   */
+  isArgAllowed(arg: any) {
+    if (arg.rules) {
+      if (arg.rules.length > 1) {
+        if (arg.rules[0].action === 'allow' && arg.rules[1].action === 'disallow') {
+          if (arg.rules[1].os.name) return arg.rules[1].os.name !== this.getOS_MCCode()
+          if (arg.rules[1].os.arch) return arg.rules[1].os.arch !== this.getArch_MCCode()
+        }
+        return false
+      } else {
+        if (arg.rules[0].action === 'allow' && arg.rules[0].os) {
+          if (arg.rules[0].os.name) {
+            if (arg.rules[0].os.name === this.getOS_MCCode() && arg.rules[0].os.version) return +this.getOSVersion().split('.')[0] >= 10
+            return arg.rules[0].os.name === this.getOS_MCCode()
+          }
+          if (arg.rules[0].os.arch) return arg.rules[0].os.arch === this.getArch_MCCode()
+          return arg.rules[0].os.name === this.getOS_MCCode()
+        } else if (arg.rules[0].action === 'allow' && arg.rules[0].features) {
+          return false
+        }
+        return true
+      }
+    }
+    return true
+  }
+
   /**
    * Get the name of a Maven library.
    * @param libName The name of the library (eg. `'com.mojang:authlib:1.5.25'`).
