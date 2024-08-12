@@ -10,6 +10,7 @@
     "outDir": "./dist"
   },
   "exclude": [
-    "test/**/*.ts"
+    "test/**/*.ts",
+    "dist/"
   ]
 }

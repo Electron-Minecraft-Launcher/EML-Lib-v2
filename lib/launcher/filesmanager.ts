@@ -5,7 +5,7 @@
  */
 
 import { FullConfig } from '../../types/config'
-import { EMLCoreError, ErrorType } from '../../types/errors'
+import { EMLLibError, ErrorType } from '../../types/errors'
 import { File, Loader } from '../../types/file'
 import { Artifact, MinecraftManifest, Assets } from '../../types/manifest'
 import utils from '../utils/utils'
@@ -54,7 +54,7 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
       .then((res) => res.json())
       .then((res) => res.data as File[])
       .catch((err) => {
-        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch modpack files: ${err}`)
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Failed to fetch modpack files: ${err}`)
       })
 
     return { modpack: modpack, files: modpack }
@@ -145,7 +145,7 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
     const res = await fetch(this.manifest.assetIndex.url)
       .then((res) => res.json() as Promise<Assets>)
       .catch((err) => {
-        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch assets: ${err}`)
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Failed to fetch assets: ${err}`)
       })
 
     if (!fs.existsSync(path_.join(this.config.root, 'assets', 'indexes'))) {

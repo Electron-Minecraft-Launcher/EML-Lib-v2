@@ -8,7 +8,7 @@ import utils from '../utils/utils'
 import EventEmitter from '../utils/events'
 import path_ from 'path'
 import { spawnSync } from 'child_process'
-import { EMLCoreError, ErrorType } from '../../types/errors'
+import { EMLLibError, ErrorType } from '../../types/errors'
 import { Bootstraps as Bootstraps_ } from '../../types/bootstraps'
 import { File } from '../../types/file'
 import { DownloaderEvents } from '../../types/events'
@@ -59,7 +59,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
     const bootstrap = bootstraps[os] as File | undefined
 
     if (!bootstrap) {
-      throw new EMLCoreError(ErrorType.FILE_ERROR, 'Not available for this operating system')
+      throw new EMLLibError(ErrorType.FILE_ERROR, 'Not available for this operating system')
     }
 
     const downloadPath = path_.join(utils.getTempFolder(), bootstrap.path, bootstrap.name)
@@ -88,7 +88,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
     const os = utils.getOS()
     const cmd = os === 'win' ? `start ${bootstrapPath}` : os === 'mac' ? `open ${bootstrapPath}` : `chmod +x ${bootstrapPath} && ./${bootstrapPath}`
     const run = spawnSync(cmd)
-    if (run.error) throw new EMLCoreError(ErrorType.EXEC_ERROR, `Error while executing the Bootstrap: ${run.error}`)
+    if (run.error) throw new EMLLibError(ErrorType.EXEC_ERROR, `Error while executing the Bootstrap: ${run.error}`)
     process.exit()
   }
 

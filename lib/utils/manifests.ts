@@ -1,5 +1,5 @@
 import { MinecraftManifest } from './../../types/manifest.d'
-import { EMLCoreError, ErrorType } from '../../types/errors'
+import { EMLLibError, ErrorType } from '../../types/errors'
 import { JAVA_RUNTIME_URL, MINECRAFT_MANIFEST_URL } from './consts'
 import { Loader } from '../../types/file'
 
@@ -19,7 +19,7 @@ class Manifests {
     const res = await fetch(`${url}/api/files-updater/loader`)
       .then((res) => res.json())
       .catch((err) => {
-        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch loader info: ${err.message}`)
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Failed to fetch loader info: ${err.message}`)
       })
 
     return res.data as Loader
@@ -44,7 +44,7 @@ class Manifests {
     const res = await fetch(manifestUrl)
       .then((res) => res.json())
       .catch((err) => {
-        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch Minecraft manifest: ${err.message}`)
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Failed to fetch Minecraft manifest: ${err.message}`)
       })
 
     return res as MinecraftManifest
@@ -59,7 +59,7 @@ class Manifests {
     const res = await fetch(MINECRAFT_MANIFEST_URL)
       .then((res) => res.json())
       .catch((err) => {
-        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch Minecraft version manifest: ${err.message}`)
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Failed to fetch Minecraft version manifest: ${err.message}`)
       })
 
     minecraftVersion =
@@ -70,7 +70,7 @@ class Manifests {
           : minecraftVersion || 'latest_release'
 
     if (!res.versions.find((version: any) => version.id === minecraftVersion)) {
-      throw new EMLCoreError(ErrorType.MINECRAFT_ERROR, `Minecraft version ${minecraftVersion} not found in manifest`)
+      throw new EMLLibError(ErrorType.MINECRAFT_ERROR, `Minecraft version ${minecraftVersion} not found in manifest`)
     }
 
     return res.versions.find((version: any) => version.id === minecraftVersion).url as string
@@ -90,7 +90,7 @@ class Manifests {
     const res = await fetch(url)
       .then((res) => res.json())
       .catch((err) => {
-        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch Java manifest: ${err.message}`)
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Failed to fetch Java manifest: ${err.message}`)
       })
 
     return res
@@ -120,20 +120,20 @@ class Manifests {
     const platform = process.platform
 
     if (platform !== 'win32' && platform !== 'darwin' && platform !== 'linux') {
-      throw new EMLCoreError(ErrorType.UNKNOWN_OS, `Unsupported platform: ${platform}`)
+      throw new EMLLibError(ErrorType.UNKNOWN_OS, `Unsupported platform: ${platform}`)
     }
     if (
       (platform === 'win32' && arch !== 'x64' && arch !== 'ia32' && arch !== 'arm64') ||
       (platform === 'darwin' && arch !== 'x64' && arch !== 'arm64') ||
       (platform === 'linux' && arch !== 'x64' && arch !== 'ia32')
     ) {
-      throw new EMLCoreError(ErrorType.UNKNOWN_OS, `Unsupported architecture: ${arch}`)
+      throw new EMLLibError(ErrorType.UNKNOWN_OS, `Unsupported architecture: ${arch}`)
     }
 
     const res = await fetch(JAVA_RUNTIME_URL)
       .then((res) => res.json())
       .catch((err) => {
-        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch Java manifest: ${err.message}`)
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Failed to fetch Java manifest: ${err.message}`)
       })
 
     if (
@@ -142,7 +142,7 @@ class Manifests {
       !res[archMapping[platform][arch]][javaVersion][0] ||
       !res[archMapping[platform][arch]][javaVersion][0].manifest
     ) {
-      throw new EMLCoreError(ErrorType.JAVA_ERROR, `Java version ${javaVersion} not found in manifest`)
+      throw new EMLLibError(ErrorType.JAVA_ERROR, `Java version ${javaVersion} not found in manifest`)
     }
 
     return res[archMapping[platform][arch]][javaVersion][0].manifest.url as string

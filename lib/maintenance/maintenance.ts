@@ -3,7 +3,7 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { EMLCoreError, ErrorType } from '../../types/errors'
+import { EMLLibError, ErrorType } from '../../types/errors'
 import { Maintenance as Maintenance_ } from '../../types/maintenance'
 
 /**
@@ -27,7 +27,7 @@ export default class Maintenance {
     let res = await fetch(`${this.url}/maintenance`, { method: 'GET' })
       .then((res) => res.json())
       .catch((err) => {
-        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Error while fetching Maintenance from the EML AdminTool: ${err}`)
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Error while fetching Maintenance from the EML AdminTool: ${err}`)
       })
 
     return res.data

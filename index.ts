@@ -19,7 +19,7 @@ export { MicrosoftAuth, AzAuth, CrackAuth, Bootstraps, Maintenance, News, Backgr
 export default { MicrosoftAuth, AzAuth, CrackAuth, Bootstraps, Maintenance, News, Background, ServerStatus, Java, Launcher }
 
 declare global {
-  namespace EMLCore {
+  namespace EMLLib {
     export { MicrosoftAuth, AzAuth, CrackAuth, Bootstraps, Maintenance, News, Background, ServerStatus, Java, Launcher }
   }
 }
