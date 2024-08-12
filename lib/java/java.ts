@@ -3,29 +3,42 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { ClientError, ErrorType } from '../../types/errors'
-import { DownloaderEvents } from '../../types/events'
+import { DownloaderEvents, JavaEvents } from '../../types/events'
 import EventEmitter from '../utils/events'
-import os from 'os'
 import manifests from '../utils/manifests'
 import { File } from '../../types/file'
-import path from 'path'
+import path_ from 'path'
 import Downloader from '../utils/downloader'
 import utils from '../utils/utils'
+import { spawnSync } from 'child_process'
+import { EMLCoreError, ErrorType } from '../../types/errors'
+import { MinecraftManifest } from '../../types/manifest'
 
-export default class Java extends EventEmitter<DownloaderEvents> {
-  private minecraftVersion: string
+/**
+ * You should not use this class if you launch Minecraft with `java.install: 'auto'` in
+ * the configuration.
+ */
+export default class Java extends EventEmitter<DownloaderEvents & JavaEvents> {
+  private minecraftVersion: string | null
   private serverId: string
+  private url?: string
 
   /**
-   * @param minecraftVersion The version of Minecraft you want to install Java for.
-   * @param serverId Your Minecraft server ID (eg. `'minecraft'`). This will be used to create
-   * the server folder (eg. `.minecraft`).
+   * @param minecraftVersion The version of Minecraft you want to install Java for. Set to
+   * `null` to get the version from the EML AdminTool. Set to `latest_release` to get the latest
+   * release version of Minecraft. Set to `latest_snapshot` to get the latest snapshot version of
+   * Minecraft.
+   * @param serverId Your Minecraft server ID (eg. `'minecraft'`). This will be used to
+   * create the server folder (eg. `.minecraft`). Java will be installed in the `runtime/jre-X`
+   * folder, where `X` is the major version of Java. If you don't want to install Java in the
+   * game folder, you must install Java by yourself.
+   * @param url The URL of the EML AdminTool website, to get the version from the EML AdminTool.
    */
-  constructor(minecraftVersion: string, serverId: string) {
+  constructor(minecraftVersion: string | null, serverId: string, url?: string) {
     super()
     this.minecraftVersion = minecraftVersion
     this.serverId = serverId
+    this.url = url
   }
 
   /**
@@ -41,19 +54,22 @@ export default class Java extends EventEmitter<DownloaderEvents> {
   }
 
   /**
-   * Get and map the files of the Java version to download.
-   * 
-   * **You should not use this method directly. Use `this.download()` instead.**
+   * Get the files of the Java version to download.
+   *
+   * **You should not use this method directly. Use `Java.download()` instead.**
+   * @param manifest The manifest of the Minecraft version. If not provided, the manifest will be fetched.
    * @returns The files of the Java version.
    */
-  async getFiles() {
-    const jreVersion = ((await manifests.getMinecraftManifest(this.minecraftVersion)).javaVersion?.component || 'jre-legacy') as
+  async getFiles(manifest?: MinecraftManifest) {
+    manifest = manifest || (await manifests.getMinecraftManifest(this.minecraftVersion, this.url))
+    const jreVersion = (manifest.javaVersion?.component || 'jre-legacy') as
       | 'java-runtime-alpha'
       | 'java-runtime-beta'
       | 'java-runtime-delta'
       | 'java-runtime-gamma'
       | 'java-runtime-gamma-snapshot'
       | 'jre-legacy'
+    const jreV = manifest.javaVersion?.majorVersion || '8'
 
     const jreManifest = await manifests.getJavaManifest(jreVersion)
 
@@ -62,15 +78,15 @@ export default class Java extends EventEmitter<DownloaderEvents> {
     Object.entries(jreManifest.files).forEach((file: [string, any]) => {
       if (file[1].type === 'directory') {
         files.push({
-          name: file[0].split('/').pop() as string,
-          path: path.join('runtime', 'jre', file[0].split('/').slice(0, -1).join('/'), '/'),
+          name: path_.basename(file[0]),
+          path: path_.join('runtime', `jre-${jreV}`, path_.dirname(file[0]), '/'),
           url: '',
           type: 'FOLDER'
         })
       } else if (file[1].downloads) {
         files.push({
-          name: file[0].split('/').pop() as string,
-          path: path.join('runtime', 'jre', file[0].split('/').slice(0, -1).join('/'), '/'),
+          name: path_.basename(file[0]),
+          path: path_.join('runtime', `jre-${jreV}`, path_.dirname(file[0]), '/'),
           url: file[1].downloads.raw.url,
           size: file[1].downloads.raw.size,
           sha1: file[1].downloads.raw.sha1,
@@ -80,5 +96,40 @@ export default class Java extends EventEmitter<DownloaderEvents> {
     })
 
     return files
+  }
+
+  /**
+   * Check if Java is correctly installed.
+   * @param absolutePath [Optional: default is `path.join(utils.getServerFolder(this.serverId), 'runtime',
+   * 'jre-${X}', 'bin', 'java')`] Absolute path to the Java executable. You can use `${X}` to replace it
+   * with the major version of Java.
+   * @param majorVersion [Optional: default is `8`] Major version of Java to check.
+   * @returns The version and architecture of Java.
+   */
+  check(
+    absolutePath: string = path_.join(utils.getServerFolder(this.serverId), 'runtime', 'jre-${X}', 'bin', 'java'),
+    majorVersion: number = 8
+  ): {
+    version: string
+    arch: '64-bit' | '32-bit'
+  } {
+    const check = spawnSync(`"${absolutePath.replace('${X}', majorVersion + '')}"`, ['-version'], { shell: true })
+    if (check.error) throw new EMLCoreError(ErrorType.JAVA_ERROR, `Java is not correctly installed: ${check.error.message}`)
+    const res = {
+      version:
+        check.output
+          .map((o) => o?.toString('utf8'))
+          .join(' ')
+          .match(/"(.*?)"/)
+          ?.pop() || majorVersion + '',
+      arch: check.output
+        .map((o) => o?.toString('utf8'))
+        .join(' ')
+        .includes('64-Bit')
+        ? '64-bit'
+        : ('32-bit' as '64-bit' | '32-bit')
+    }
+    this.emit('java_info', res)
+    return res
   }
 }

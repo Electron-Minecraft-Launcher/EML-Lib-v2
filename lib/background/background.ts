@@ -3,7 +3,7 @@
  * @copyright Copyright (c) 2024, GoldFrite
  */
 
-import { ClientError, ErrorType } from '../../types/errors'
+import { EMLCoreError, ErrorType } from '../../types/errors'
 import { Background as Background_ } from '../../types/background'
 
 /**
@@ -27,7 +27,7 @@ export default class Background {
     const res = await fetch(`${this.url}/backgrounds`)
       .then((res) => res.json() as Promise<{ data: Background_[] }>)
       .catch((err) => {
-        throw new ClientError(ErrorType.DOWNLOAD_ERROR, `Error while fetching backgrounds: ${err}`)
+        throw new EMLCoreError(ErrorType.DOWNLOAD_ERROR, `Error while fetching backgrounds: ${err}`)
       })
 
     return res.data.find((bg) => bg.status === 1) || null

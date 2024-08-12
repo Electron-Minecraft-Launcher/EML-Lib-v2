@@ -1,21 +1,50 @@
 import { MinecraftManifest } from './../../types/manifest.d'
-import { ClientError, ErrorType } from '../../types/errors'
+import { EMLCoreError, ErrorType } from '../../types/errors'
 import { JAVA_RUNTIME_URL, MINECRAFT_MANIFEST_URL } from './consts'
-import os from 'os'
+import { Loader } from '../../types/file'
 
 class Manifests {
   /**
-   * Get the manifest of the Minecraft version.
-   * @param minecraftVersion The version of Minecraft you want to get the manifest for.
-   * @returns The manifest of the Minecraft version.
+   * Get the loader info from the EML AdminTool.
+   * @param minecraftVersion The version of Minecraft you want to get the loader info for. Set to
+   * `null` to get the version from the EML AdminTool. Set to `latest_release` to get the latest
+   * release version of Minecraft. Set to `latest_snapshot` to get the latest snapshot version of
+   * Minecraft.
+   * @param url The URL of the EML AdminTool website, to get the loader info from the EML AdminTool.
    */
-  async getMinecraftManifest(minecraftVersion: string | null = null) {
-    const url = await this.getMinecraftManifestUrl(minecraftVersion)
+  async getLoaderInfo(minecraftVersion: string | null, url?: string) {
+    if (!minecraftVersion && !url) return { loader: 'vanilla', minecraft_version: 'latest_release', loader_version: 'latest_release' } as Loader
+    if (minecraftVersion) return { loader: 'vanilla', minecraft_version: minecraftVersion, loader_version: minecraftVersion } as Loader
 
-    const res = await fetch(url)
+    const res = await fetch(`${url}/api/files-updater/loader`)
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.FETCH_ERROR, `Failed to fetch Minecraft manifest: ${err.message}`)
+        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch loader info: ${err.message}`)
+      })
+
+    return res.data as Loader
+  }
+
+  /**
+   * Get the manifest of the Minecraft version.
+   * @param minecraftVersion The version of Minecraft you want to get the manifest for. Set to
+   * `null` to get the version from the EML AdminTool. Set to `latest_release` to get the latest
+   * release version of Minecraft. Set to `latest_snapshot` to get the latest snapshot version of
+   * Minecraft.
+   * @param url The URL of the EML AdminTool website, to get the version from the EML AdminTool.
+   * @returns The manifest of the Minecraft version.
+   */
+  async getMinecraftManifest(minecraftVersion: string | null = 'latest_release', url?: string) {
+    if (!minecraftVersion && url) {
+      minecraftVersion = (await this.getLoaderInfo(null, url)).minecraft_version
+    }
+
+    const manifestUrl = await this.getMinecraftManifestUrl(minecraftVersion)
+
+    const res = await fetch(manifestUrl)
+      .then((res) => res.json())
+      .catch((err) => {
+        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch Minecraft manifest: ${err.message}`)
       })
 
     return res as MinecraftManifest
@@ -30,13 +59,18 @@ class Manifests {
     const res = await fetch(MINECRAFT_MANIFEST_URL)
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.FETCH_ERROR, `Failed to fetch Minecraft version manifest: ${err.message}`)
+        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch Minecraft version manifest: ${err.message}`)
       })
 
-    minecraftVersion = minecraftVersion || res.latest.release
+    minecraftVersion =
+      minecraftVersion === 'latest_release'
+        ? res.latest.release
+        : minecraftVersion === 'latest_snapshot'
+          ? res.latest.snapshot
+          : minecraftVersion || 'latest_release'
 
     if (!res.versions.find((version: any) => version.id === minecraftVersion)) {
-      throw new ClientError(ErrorType.MINECRAFT_ERROR, `Minecraft version ${minecraftVersion} not found in manifest`)
+      throw new EMLCoreError(ErrorType.MINECRAFT_ERROR, `Minecraft version ${minecraftVersion} not found in manifest`)
     }
 
     return res.versions.find((version: any) => version.id === minecraftVersion).url as string
@@ -56,7 +90,7 @@ class Manifests {
     const res = await fetch(url)
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.FETCH_ERROR, `Failed to fetch Java manifest: ${err.message}`)
+        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch Java manifest: ${err.message}`)
       })
 
     return res
@@ -82,24 +116,24 @@ class Manifests {
       linux: { x64: 'linux', ia32: 'linux-i386' }
     } as any
 
-    const arch = os.arch()
-    const platform = os.platform()
+    const arch = process.arch
+    const platform = process.platform
 
     if (platform !== 'win32' && platform !== 'darwin' && platform !== 'linux') {
-      throw new ClientError(ErrorType.UNKNOWN_OS, `Unsupported platform: ${platform}`)
+      throw new EMLCoreError(ErrorType.UNKNOWN_OS, `Unsupported platform: ${platform}`)
     }
     if (
       (platform === 'win32' && arch !== 'x64' && arch !== 'ia32' && arch !== 'arm64') ||
       (platform === 'darwin' && arch !== 'x64' && arch !== 'arm64') ||
       (platform === 'linux' && arch !== 'x64' && arch !== 'ia32')
     ) {
-      throw new ClientError(ErrorType.UNKNOWN_OS, `Unsupported architecture: ${arch}`)
+      throw new EMLCoreError(ErrorType.UNKNOWN_OS, `Unsupported architecture: ${arch}`)
     }
 
     const res = await fetch(JAVA_RUNTIME_URL)
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.FETCH_ERROR, `Failed to fetch Java manifest: ${err.message}`)
+        throw new EMLCoreError(ErrorType.FETCH_ERROR, `Failed to fetch Java manifest: ${err.message}`)
       })
 
     if (
@@ -108,7 +142,7 @@ class Manifests {
       !res[archMapping[platform][arch]][javaVersion][0] ||
       !res[archMapping[platform][arch]][javaVersion][0].manifest
     ) {
-      throw new ClientError(ErrorType.JAVA_ERROR, `Java version ${javaVersion} not found in manifest`)
+      throw new EMLCoreError(ErrorType.JAVA_ERROR, `Java version ${javaVersion} not found in manifest`)
     }
 
     return res[archMapping[platform][arch]][javaVersion][0].manifest.url as string

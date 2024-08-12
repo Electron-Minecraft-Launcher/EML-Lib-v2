@@ -4,10 +4,9 @@
  */
 
 import { BrowserWindow } from 'electron'
-// import fetch from 'node-fetch'
-import MicrosoftAuthGui from './microsoft-gui'
-import { Account } from '../../types/auth'
-import { ClientError, ErrorType } from '../../types/errors'
+import MicrosoftAuthGui from './microsoftgui'
+import { Account } from '../../types/account'
+import { EMLCoreError, ErrorType } from '../../types/errors'
 
 export default class MicrosoftAuth {
   private mainWindow: BrowserWindow
@@ -28,7 +27,7 @@ export default class MicrosoftAuth {
    */
   async auth(): Promise<Account> {
     let userCode = await new MicrosoftAuthGui(this.mainWindow, this.clientId).openWindow()
-    if (userCode == 'cancel') throw new ClientError(ErrorType.AUTH_CANCELLED, 'User cancelled the login')
+    if (userCode == 'cancel') throw new EMLCoreError(ErrorType.AUTH_CANCELLED, 'User cancelled the login')
 
     let res = await fetch('https://login.live.com/oauth20_token.srf', {
       method: 'POST',
@@ -39,7 +38,7 @@ export default class MicrosoftAuth {
     })
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.AUTH_ERROR, 'Error while getting the OAuth2 token')
+        throw new EMLCoreError(ErrorType.AUTH_ERROR, 'Error while getting the OAuth2 token')
       })
 
     try {
@@ -64,7 +63,7 @@ export default class MicrosoftAuth {
     })
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.AUTH_ERROR, 'Error while getting the OAuth2 token')
+        throw new EMLCoreError(ErrorType.AUTH_ERROR, 'Error while getting the OAuth2 token')
       })
 
     try {
@@ -90,7 +89,7 @@ export default class MicrosoftAuth {
     })
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.AUTH_ERROR, 'Error while getting the Xbox Live token')
+        throw new EMLCoreError(ErrorType.AUTH_ERROR, 'Error while getting the Xbox Live token')
       })
 
     let xsts = await fetch('https://xsts.auth.xboxlive.com/xsts/authorize', {
@@ -110,7 +109,7 @@ export default class MicrosoftAuth {
     })
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.AUTH_ERROR, 'Error while getting the XSTS token')
+        throw new EMLCoreError(ErrorType.AUTH_ERROR, 'Error while getting the XSTS token')
       })
 
     let launch = await fetch('https://api.minecraftservices.com/launcher/login', {
@@ -122,7 +121,7 @@ export default class MicrosoftAuth {
     })
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.AUTH_ERROR, 'Error while launching the game')
+        throw new EMLCoreError(ErrorType.AUTH_ERROR, 'Error while launching the game')
       })
 
     let mcLogin = await fetch('https://api.minecraftservices.com/authentication/login_with_xbox', {
@@ -134,7 +133,7 @@ export default class MicrosoftAuth {
     })
       .then((res) => res.json())
       .catch((err) => {
-        throw new ClientError(ErrorType.AUTH_ERROR, 'Error while logging into Minecraft')
+        throw new EMLCoreError(ErrorType.AUTH_ERROR, 'Error while logging into Minecraft')
       })
 
     let hasGame = await fetch('https://api.minecraftservices.com/entitlements/mcstore', {
@@ -145,7 +144,7 @@ export default class MicrosoftAuth {
     }).then((res: any) => res.json())
 
     if (!hasGame.items.find((i: any) => i.name == 'product_minecraft' || i.name == 'game_minecraft')) {
-      throw new ClientError(ErrorType.AUTH_ERROR, 'Minecraft not owned')
+      throw new EMLCoreError(ErrorType.AUTH_ERROR, 'Minecraft not owned')
     }
 
     let profile: { uuid: any; name: any }
@@ -165,7 +164,7 @@ export default class MicrosoftAuth {
       userProperties: {},
       meta: {
         online: true,
-        type: 'Xbox'
+        type: 'msa'
       }
     }
   }
@@ -177,7 +176,7 @@ export default class MicrosoftAuth {
         Authorization: `Bearer ${mcLogin.access_token}`
       }
     }).then((res: any) => res.json())
-    if (profile.error) throw new ClientError(ErrorType.AUTH_ERROR, 'Error while getting the Minecraft profile')
+    if (profile.error) throw new EMLCoreError(ErrorType.AUTH_ERROR, 'Error while getting the Minecraft profile')
 
     return {
       uuid: profile.id,

@@ -5,10 +5,10 @@
  */
 
 import * as net from 'net'
-import type { ServerStatus as ServerStatus_ } from '../../types/status.d.ts'
-import { ClientError, ErrorType } from '../../types/errors'
-import BufferWriter from './buffer-writer'
-import BufferReader from './buffer-reader'
+import type { ServerStatus as ServerStatus_ } from '../../types/status'
+import { EMLCoreError, ErrorType } from '../../types/errors'
+import BufferWriter from './bufferwriter'
+import BufferReader from './bufferreader'
 
 export default class ServerStatus {
   private ip: string
@@ -51,7 +51,7 @@ export default class ServerStatus {
       socket.setNoDelay(true)
 
       const timeout = setTimeout(() => {
-        throw new ClientError(ErrorType.NET_ERROR, 'Connection timed out')
+        throw new EMLCoreError(ErrorType.NET_ERROR, 'Connection timed out')
       }, this.timeout * 1000)
 
       socket.on('connect', () => {
@@ -86,7 +86,7 @@ export default class ServerStatus {
           const buf = Buffer.concat([bufWriter.writeByte(0xfe), bufWriter.writeByte(1)])
           socket.write(buf)
         } else {
-          reject(new ClientError(ErrorType.NET_ERROR, 'Unsupported protocol version'))
+          reject(new EMLCoreError(ErrorType.NET_ERROR, 'Unsupported protocol version'))
         }
       })
 
@@ -125,12 +125,12 @@ export default class ServerStatus {
               socket.destroy()
               clearTimeout(timeout)
             } catch (err) {
-              reject(new ClientError(ErrorType.NET_ERROR, `Received invalid response: ${err}`))
+              reject(new EMLCoreError(ErrorType.NET_ERROR, `Received invalid response: ${err}`))
               socket.destroy()
               clearTimeout(timeout)
             }
           } else {
-            reject(new ClientError(ErrorType.NET_ERROR, `Received unexpected packet`))
+            reject(new EMLCoreError(ErrorType.NET_ERROR, `Received unexpected packet`))
             socket.destroy()
             clearTimeout(timeout)
           }
@@ -140,7 +140,7 @@ export default class ServerStatus {
             const fields = bufReader.readStringUTF16BE().split('\u0000')
 
             if (fields[0] !== '§1') {
-              reject(new ClientError(ErrorType.NET_ERROR, `Received invalid response: the first field is not '§1'`))
+              reject(new EMLCoreError(ErrorType.NET_ERROR, `Received invalid response: the first field is not '§1'`))
               socket.destroy()
               clearTimeout(timeout)
             }
@@ -154,14 +154,14 @@ export default class ServerStatus {
             socket.destroy()
             clearTimeout(timeout)
           } else {
-            reject(new ClientError(ErrorType.NET_ERROR, `Received invalid response: wrong packet identifier`))
+            reject(new EMLCoreError(ErrorType.NET_ERROR, `Received invalid response: wrong packet identifier`))
             socket.destroy()
             clearTimeout(timeout)
           }
         }
       })
 
-      socket.on('error', (err) => reject(new ClientError(ErrorType.NET_ERROR, err)))
+      socket.on('error', (err) => reject(new EMLCoreError(ErrorType.NET_ERROR, err)))
     })
   }
 }

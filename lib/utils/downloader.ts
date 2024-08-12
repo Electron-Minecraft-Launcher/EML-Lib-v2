@@ -5,88 +5,88 @@
 
 import { File } from '../../types/file'
 import fs from 'fs'
-import path from 'path'
-import crypto from 'crypto'
-import { ClientError, ErrorType } from '../../types/errors'
+import path_ from 'path'
 import fetch from 'node-fetch'
 import EventEmitter from '../utils/events'
 import { DownloaderEvents } from '../../types/events'
+import utils from './utils'
 
 export default class Downloader extends EventEmitter<DownloaderEvents> {
+  private dest: string
   private size: number = 0
-  private dest: string = ''
   private downloaded: { amount: number; size: number } = { amount: 0, size: 0 }
-  private errors: number = 0
+  private error: boolean = false
   private speed: number = 0
   private eta: number = 0
   private history: { size: number; time: number }[] = []
 
-  private browsed: { name: string; path: string; sha1: string }[] = []
-
   /**
-   * You can use `this.forwardEvents()` to forward events to another EventEmitter.
-   * @param dest Destination folder
+   * @param dest Destination folder.
    */
   constructor(dest: string) {
     super()
-    this.dest = path.join(dest)
+    this.dest = path_.join(dest)
   }
 
   /**
    * Download files from the list.
-   * @param files List of files to download
+   * @param files List of files to download. This list must include folders.
+   * @param skipCheck Skip files that already exist in the destination folder (force to
+   * download all files).
    */
-  async download(files: File[]) {
-    let filesToDownload: File[] = []
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const filePath = path.join(this.dest, file.path, file.name)
-      if (file.type === 'FOLDER') {
-        if (!fs.existsSync(path.join(this.dest, file.path, file.name))) {
-          fs.mkdirSync(path.join(this.dest, file.path, file.name), { recursive: true })
-        }
-      } else if (!fs.existsSync(filePath) || file.sha1 !== this.getHash(filePath)) {
-        filesToDownload.push(file)
-      }
-    }
+  async download(files: File[], skipCheck: boolean = false): Promise<void> {
+    const filesToDownload: File[] = !skipCheck ? this.getFilesToDownload(files) : files
 
+    this.size = 0
     this.size = filesToDownload.reduce((acc, curr) => acc + (curr.size || 0), 0)
+    this.downloaded = { amount: 0, size: 0 }
+    this.error = false
+    this.speed = 0
+    this.eta = 0
+    this.history = []
     if (this.size === 0) {
-      this.emit('finish', { downloaded: this.downloaded, errors: this.errors })
+      this.emit('download_end', { downloaded: this.downloaded })
       return
     }
 
     const max = filesToDownload.length > 5 ? 5 : filesToDownload.length
 
     for (let i = 0; i < max; i++) this.downloadFile(filesToDownload, i)
+
+    return new Promise((resolve, reject) => {
+      this.on('download_end', () => resolve())
+      this.on('download_error', (err) => reject(err))
+    })
   }
 
   /**
-   * Clean the destination folder by removing files that are not in the list.
-   * @param files List of files to check ('ok' files; files that should be in the destination folder).
-   * @param ignore List of files to ignore (don't delete them).
+   * Get files that need to be downloaded (files that don't exist or have different hash).
+   * @param files List of files to check.
+   * @returns List of files to download.
    */
-  async clean(files: File[], ignore: string[] = []) {
-    let i = 0
-    this.browsed = []
-    this.browse(this.dest)
-
-    this.browsed.forEach((file) => {
-      if (!files.find((f) => path.join(this.dest, f.path, f.name) === path.join(file.path, file.name)) && !ignore.includes(file.name)) {
-        fs.unlinkSync(path.join(file.path, file.name))
-        i++
-        this.emit('clean', { file: file.name })
+  getFilesToDownload(files: File[]) {
+    let filesToDownload: File[] = []
+    
+    files.forEach((file) => {
+      const filePath = path_.join(this.dest, file.path, file.name)
+      if (file.type === 'FOLDER') {
+        if (!fs.existsSync(filePath)) {
+          fs.mkdirSync(filePath, { recursive: true })
+        }
+      } else if (!fs.existsSync(filePath) || file.sha1 !== utils.getFileHash(filePath)) {
+        filesToDownload.push(file)
       }
-      // Can't check hash for performance reasons
     })
 
-    this.emit('cleaned', { amount: i })
+    return filesToDownload
   }
 
   private async downloadFile(files: File[], i: number, t = 0) {
     const file = files[i]
-    const dirPath = path.join(this.dest, file.path)
-    const filePath = path.join(dirPath, file.name)
+    const dirPath = path_.join(this.dest, file.path)
+    const filePath = path_.join(dirPath, file.name)
+
+    if (this.error) return
 
     try {
       if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true })
@@ -99,10 +99,12 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
           setTimeout(() => this.downloadFile(files, i, t + 1), 1000)
           return
         }
-        this.emit('error', {
-          file: file.name,
-          error: res.statusText
+        this.emit('download_error', {
+          filename: file.name,
+          type: file.type,
+          message: res.statusText
         })
+        this.error = true
         return
       }
       if (!res.body) {
@@ -110,10 +112,12 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
           setTimeout(() => this.downloadFile(files, i, t + 1), 1000)
           return
         }
-        this.emit('error', {
-          file: file.name,
-          error: 'No body'
+        this.emit('download_error', {
+          filename: file.name,
+          type: file.type,
+          message: 'No body'
         })
+        this.error = true
         return
       }
 
@@ -135,7 +139,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
           this.speed = totalSize / elapsedTime
           this.eta = (this.size - this.downloaded.size) / this.speed // TODO Fix ETA
 
-          this.emit('progress', {
+          this.emit('download_progress', {
             total: { amount: files.length, size: this.size },
             downloaded: this.downloaded,
             speed: this.speed,
@@ -145,19 +149,20 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
         })
 
         res.body.on('error', (err) => {
-          this.errors++
           stream.destroy()
-          this.emit('error', {
-            file: file.name,
-            error: err
+          this.emit('download_error', {
+            filename: file.name,
+            type: file.type,
+            message: err
           })
+          this.error = true
           reject(err)
         })
 
         res.body.on('end', (val) => {
           this.downloaded.amount++
-          if (this.downloaded.amount + this.errors === files.length) {
-            this.emit('finish', { downloaded: this.downloaded, errors: this.errors })
+          if (this.downloaded.amount === files.length) {
+            this.emit('download_end', { downloaded: this.downloaded })
           } else if (i + 5 < files.length) {
             this.downloadFile(files, i + 5)
           }
@@ -170,38 +175,13 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
         setTimeout(() => this.downloadFile(files, i, t + 1), 1000)
         return
       }
-      this.emit('error', {
-        file: file.name,
-        error: error
+      this.emit('download_error', {
+        filename: file.name,
+        type: file.type,
+        message: error
       })
+      this.error = true
       return
-    }
-  }
-
-  private browse(dir: string): void {
-    if (!fs.existsSync(dir)) return
-
-    const files = fs.readdirSync(dir)
-
-    files.forEach((file) => {
-      if (fs.statSync(path.join(dir, file)).isDirectory()) {
-        this.browse(path.join(dir, file))
-      } else {
-        this.browsed.push({
-          name: file,
-          path: `${dir}/`.split('\\').join('/').replace(/^\/+/, ''),
-          sha1: this.getHash(path.join(dir, file))
-        })
-      }
-    })
-  }
-
-  private getHash(filePath: string) {
-    try {
-      const fileHash = fs.readFileSync(filePath)
-      return crypto.createHash('sha1').update(fileHash).digest('hex')
-    } catch (err) {
-      throw new ClientError(ErrorType.HASH_ERROR, `Error while getting hash of the file ${filePath}: ${err}`)
     }
   }
 }

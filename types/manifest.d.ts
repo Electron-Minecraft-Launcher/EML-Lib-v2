@@ -1,7 +1,7 @@
 export interface MinecraftManifest {
   arguments?: {
-    game: string[]
-    jvm: any[]
+    game: (string | Argument)[]
+    jvm: (string | Argument)[]
   }
   assetIndex: {
     id: string
@@ -39,20 +39,30 @@ export interface MinecraftManifest {
     component: string
     majorVersion: number
   }
-  libraries: [
-    {
-      downloads: {
-        artifact: {
-          path: string
-          sha1: string
-          size: number
-          url: string
-        }
-        name: string
-        rules?: any[]
+  libraries: {
+    downloads: {
+      artifact?: Artifact
+      classifiers?: {
+        'natives-linux'?: Artifact
+        'natives-osx'?: Artifact
+        'natives-windows'?: Artifact
+        'natives-windows-32'?: Artifact
+        'native-windows-64'?: Artifact
       }
     }
-  ]
+    extract?: { exclude: string[] }
+    name?: string
+    natives?: { windows?: string; osx?: string; linux?: string }
+    rules: { action: 'allow' | 'disallow'; os?: { name: 'windows' | 'osx' | 'linux' } }[]
+    /**
+     * Old Forge only.
+     */
+    url?: string
+    /**
+     * Old Forge only.
+     */
+    clientreq?: boolean
+  }[]
   logging: {
     client: {
       argument: string
@@ -71,4 +81,26 @@ export interface MinecraftManifest {
   releaseTime: string
   time: string
   type: string
+  processArguments?: string
+}
+
+export interface Artifact {
+  path?: string
+  sha1: string
+  size: number
+  url: string
+}
+
+export interface Assets {
+  objects: {
+    [key: string]: {
+      hash: string
+      size: number
+    }
+  }
+}
+
+export interface Argument {
+  rules: { action: 'allow' | 'disallow'; features: { [key: string]: boolean } }[]
+  value: string | string[]
 }

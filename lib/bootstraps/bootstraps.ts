@@ -6,9 +6,9 @@
 import Downloader from '../utils/downloader'
 import utils from '../utils/utils'
 import EventEmitter from '../utils/events'
-import path from 'path'
-import { exec } from 'child_process'
-import { ClientError, ErrorType } from '../../types/errors'
+import path_ from 'path'
+import { spawnSync } from 'child_process'
+import { EMLCoreError, ErrorType } from '../../types/errors'
 import { Bootstraps as Bootstraps_ } from '../../types/bootstraps'
 import { File } from '../../types/file'
 import { DownloaderEvents } from '../../types/events'
@@ -51,7 +51,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
    * Download the latest Bootstrap from the EML AdminTool.
    * The downloaded Bootstrap will be saved in the temp folder. The function will return the path to the downloaded Bootstrap.
    * This method does not check for update or runs the update, it will always download the latest version.
-   * @param bootstraps The Bootstraps object returned by `this.checkForUpdate()`.
+   * @param bootstraps The Bootstraps object returned by `Bootstraps.checkForUpdate()`.
    * @returns The path to the downloaded Bootstrap.
    */
   async download(bootstraps: Bootstraps_): Promise<string> {
@@ -59,16 +59,16 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
     const bootstrap = bootstraps[os] as File | undefined
 
     if (!bootstrap) {
-      throw new ClientError(ErrorType.FILE_ERROR, 'Not available for this operating system')
+      throw new EMLCoreError(ErrorType.FILE_ERROR, 'Not available for this operating system')
     }
 
-    const downloadPath = path.join(utils.getTempFolder(), bootstrap.path, bootstrap.name)
+    const downloadPath = path_.join(utils.getTempFolder(), bootstrap.path, bootstrap.name)
     const downloader = new Downloader(utils.getTempFolder())
 
     downloader.forwardEvents(this)
 
     try {
-      downloader.download([bootstrap])
+      await downloader.download([bootstrap])
     } catch (error) {
       throw error
     }
@@ -82,26 +82,22 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
    * If the file does not exist or is not executable, an error will be thrown.
    * This method automatically close the Launcher after the Bootstrap is executed.
    * @workInProgress **This method is not tested yet.**
-   * @param bootstrapPath The path to the downloaded Bootstrap (returned by `this.download()`)
+   * @param bootstrapPath The path to the downloaded Bootstrap (returned by `Bootstraos.download()`)
    */
-  async runUpdate(bootstrapPath: string) {
+  runUpdate(bootstrapPath: string) {
     const os = utils.getOS()
     const cmd = os === 'win' ? `start ${bootstrapPath}` : os === 'mac' ? `open ${bootstrapPath}` : `chmod +x ${bootstrapPath} && ./${bootstrapPath}`
-    exec(cmd, (err) => {
-      if (err) {
-        throw new ClientError(ErrorType.EXEC_ERROR, `Error while executing the Bootstrap: ${err}`)
-      }
-      process.exit()
-    })
+    const run = spawnSync(cmd)
+    if (run.error) throw new EMLCoreError(ErrorType.EXEC_ERROR, `Error while executing the Bootstrap: ${run.error}`)
+    process.exit()
   }
 
   /**
    * Check for updates, download and run the Bootstrap if an update is available. This method is a
-   * combination of `this.checkForUpdate()`, `this.download()` and `this.runUpdate()`. 
-   * 
-   * It allows you to
-   * check for updates, download and run the Bootstrap with a single function call, without having to
-   * call each function separately. However, this method will not return any value and give you no control
+   * combination of `Bootstraps.checkForUpdate()`, `Bootstraps.download()` and `Bootstraps.runUpdate()`.
+   *
+   * It allows you to check for updates, download and run the Bootstrap with a single function call, without having
+   * to call each function separately. However, this method will not return any value and give you no control
    * over the process. If you need more control, you should use the other methods.
    * @param currentVersion The current version of your Launcher. You can get it with `app.getVersion()`.
    */
@@ -110,7 +106,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
 
     if (bootstraps) {
       const bootstrapPath = await this.download(bootstraps)
-      await this.runUpdate(bootstrapPath)
+      this.runUpdate(bootstrapPath)
     }
   }
 }
