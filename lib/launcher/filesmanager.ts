@@ -220,9 +220,9 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
       zip.getEntries().forEach((entry) => {
         if (!entry.entryName.startsWith('META-INF')) {
           if (entry.isDirectory) {
-            fs.mkdirSync(`${nativesFolder}/${entry.entryName}`, { recursive: true })
+            fs.mkdirSync(path_.join(nativesFolder, entry.entryName), { recursive: true })
           } else {
-            fs.writeFileSync(`${nativesFolder}/${entry.entryName}`, zip.readFile(entry)!)
+            fs.writeFileSync(path_.join(nativesFolder, entry.entryName), zip.readFile(entry)!)
           }
 
           files.push({
