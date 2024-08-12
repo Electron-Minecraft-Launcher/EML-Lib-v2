@@ -4,7 +4,7 @@
 
 [<p align="center"><img src="https://img.shields.io/badge/Discord-Electron_Minecraft_Launcher-5561e6?&style=for-the-badge">](https://discord.gg/YVB4k6HzAY)
 [<img src="https://img.shields.io/badge/platforms-Windows%2C%20macOS%2C%20Linux-0077DA?style=for-the-badge&color=0077DA">](#platforms)
-[<img src="https://img.shields.io/badge/version-2.0.0--alpha.0-orangered?style=for-the-badge&color=orangered">](package.json)</p>
+[<img src="https://img.shields.io/badge/version-2.0.0--alpha.1-orangered?style=for-the-badge&color=orangered">](package.json)</p>
 
 ---
 
@@ -46,12 +46,10 @@ If you don't want to use the EML AdminTool, you should rather use the [Minecraft
 
 ### EML Core installation
 
-> [!NOTE]
-> The library is not yet available on npm.
-
 You need [Node.js](https://nodejs.org) and [Electron](https://electronjs.org).
 
 ```bash
+# Using npm
 npm i emlcore
 ```
 
@@ -59,7 +57,7 @@ npm i emlcore
 
 ### Quick start
 
-Quick start using the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2:
+Quick start using the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2):
 
 ```javascript
 const EMLCore = require('emlcore')
@@ -79,12 +77,16 @@ Please refer to the [documentation](https://github.com/Electrn-Minecraft-Launche
 
 The library have been tested on:
 
-| Minecraft version | OS                      | Loader  | Result |
-| ----------------- | ----------------------- | ------- | ------ |
-| 1.21.1            | Windows 11 (26120.1252) | Vanilla | OK     |
-| 1.17.1            | Windows 11 (19043.1165) | Vanilla | OK     |
-| 1.12.2            | Windows 11 (19043.1165) | Vanilla | OK     |
-| 1.7.10            | Windows 11 (19043.1165) | Vanilla | OK     |
+| Minecraft version | OS                      | Loader  | Result                                                                        |
+| ----------------- | ----------------------- | ------- | ----------------------------------------------------------------------------- |
+| 1.21.1            | Windows 11 (26120.1252) | Vanilla | OK                                                                            |
+| 1.19.4            | Windows 11 (26120.1252) | Vanilla | OK                                                                            |
+| 1.17.1            | Windows 11 (19043.1165) | Vanilla | OK                                                                            |
+| 1.16.5            | Windows 11 (19043.1165) | Vanilla | OK                                                                            |
+| 1.12.2            | Windows 11 (19043.1165) | Vanilla | OK                                                                            |
+| 1.7.10            | Windows 11 (19043.1165) | Vanilla | OK                                                                            |
+| 1.4.7             | Windows 11 (19043.1165) | Vanilla | Vanilla: Non-breaking errors: Minecraft tries to fetch non-existing HTTP data |
+| 1.0.0             | Windows 11 (19043.1165) | Vanilla | Vanilla: Non-breaking errors: Minecraft tries to fetch non-existing HTTP data |
 
 ## Contributing
 
@@ -102,9 +104,11 @@ npm i
 You can submit your tests by creating an issue.
 
 Please indicate the following information in your issue:
+
 - The Minecraft version;
 - The operating system the test was performed on (including the version);
 - The loader used (Vanilla, Forge, Fabric, etc., including the loader version);
-- The result of the test (`OK` if the test was successful, `KO` if the test failed, or a detailed explanation if the test was not conclusive).
+- The result of the test (`OK` if the test was successful, `KO` if the test failed, or a detailed explanation if the test was not conclusive and if it breaks the game).
 
 [^1]: Requires the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2).
+

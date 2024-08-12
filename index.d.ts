@@ -35,7 +35,7 @@ import Launcher from './lib/launcher/launcher'
  *
  * ---
  *
- * @version 2.0.0-alpha.0
+ * @version 2.0.0-alpha.1
  * @license MIT — See the `LICENSE` file for more information
  * @copyright Copyright (c) 2024, GoldFrite
  */

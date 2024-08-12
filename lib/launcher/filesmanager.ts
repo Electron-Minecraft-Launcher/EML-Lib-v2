@@ -256,7 +256,7 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
         this.emit('copy_debug', "The 'assets/legacy' directory is no longer used. You can safely remove it from your server's root directory.")
       }
 
-      const assets = JSON.parse(fs.readFileSync(path_.join(this.config.root, 'assets', 'indexes', `${this.manifest.id}.json`), 'utf-8')) as Assets
+      const assets = JSON.parse(fs.readFileSync(path_.join(this.config.root, 'assets', 'indexes', `${this.manifest.assets}.json`), 'utf-8')) as Assets
 
       Object.entries(assets.objects).forEach(([path, { hash, size }]) => {
         const assetLegacyPath = path_.join('resources', path_.dirname(path))

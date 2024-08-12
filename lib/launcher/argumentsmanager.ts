@@ -57,7 +57,7 @@ export default class ArgumentsManager {
     } else {
       args.push('-Djava.library.path=${natives_directory}')
       args.push('-cp')
-      args.push(' ${classpath}')
+      args.push('${classpath}')
       if (utils.getOS() === 'win' && +utils.getOSVersion().split('.')[0] >= 10) args.push('-Dos.name=Windows 10 -Dos.version=10.0')
       if (utils.getOS() === 'win') args.push('-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump')
       if (utils.getOS() === 'mac') args.push('-XstartOnFirstThread')
