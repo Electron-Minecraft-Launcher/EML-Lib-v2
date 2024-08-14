@@ -173,6 +173,28 @@ class Utils {
     const l = libName.split(':')
     return path_.join(...path, `${l[0].replace(/\./g, '/')}/${l[1]}/${l[2]}/`)
   }
+
+  /**
+   * Check if a version is newer than another.
+   * @param refVersion Reference version.
+   * @param checkVersion Version to check.
+   * @returns `true` if `checkVersion` is newer than `refVersion`, `false` otherwise.
+   */
+  isNewer(refVersion: string, checkVersion: string) {
+    const ref = refVersion.split('.').map((v) => +v.split('-').shift()!)
+    const check = checkVersion.split('.').map((v) => +v.split('-').shift()!)
+
+    if (refVersion === checkVersion) return null
+
+    for (let i = 0; i < ref.length; i++) {
+      if (!check[i] + '' && ref[i]) check.push(0)
+      if (check[i] + '' && !ref[i]) ref.push(0)
+      if (check[i] > ref[i]) return true
+      if (check[i] < ref[i]) return false
+    }
+
+    return false
+  }
 }
 
 export default new Utils()

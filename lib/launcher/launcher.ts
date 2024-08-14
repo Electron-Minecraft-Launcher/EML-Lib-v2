@@ -124,7 +124,7 @@ export default class Launcher extends EventEmitter<
     //* Install loader
     this.emit('launch_install_loader', loader)
 
-    const loaderFiles = loaderManager.setupLoader()
+    const loaderFiles = await loaderManager.setupLoader()
     await downloader.download(loaderFiles.libraries)
 
     //* Extract natives
@@ -166,7 +166,7 @@ export default class Launcher extends EventEmitter<
     //* Launch
     this.emit('launch_launch', { version: manifest.id, loader: loader.loader, loaderVersion: loader.loader_version })
 
-    const args = argumentsManager.getArgs([...librariesFiles.files, ...loaderFiles.libraries], loaderFiles.loaderManifest)
+    const args = argumentsManager.getArgs([...loaderFiles.libraries, ...librariesFiles.libraries], loaderFiles.loaderManifest)
 
     this.emit('launch_debug', `Launching Minecraft with args: ${args.join(' ')}`)
 

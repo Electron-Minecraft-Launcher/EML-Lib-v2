@@ -72,7 +72,7 @@ export default class Patcher extends EventEmitter<PatcherEvents> {
     let files: File[] = []
     let libraries: string[] = []
 
-    processors.forEach((processor: any) => {
+    processors?.forEach((processor: any) => {
       if (processor?.sides && !processor.sides.includes('client')) return
 
       processor.args.forEach((arg: string) => {

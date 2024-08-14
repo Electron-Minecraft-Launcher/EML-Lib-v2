@@ -43,6 +43,7 @@ export default class ArgumentsManager {
     let args: string[] = this.config.java?.args || []
 
     if (this.manifest.arguments?.jvm) {
+      console.log('HERE')
       ;[...this.manifest.arguments.jvm, ...(this.loaderManifest?.arguments!.jvm || [])].forEach((arg) => {
         if (typeof arg === 'string') {
           args.push(arg)
@@ -56,6 +57,9 @@ export default class ArgumentsManager {
       })
     } else {
       args.push('-Djava.library.path=${natives_directory}')
+      args.push('-Dminecraft.launcher.brand=${launcher_name}')
+      args.push('-Dminecraft.launcher.version=${launcher_version}')
+      args.push('-Dminecraft.client.jar=${jar_path}')
       args.push('-cp')
       args.push('${classpath}')
       if (utils.getOS() === 'win' && +utils.getOSVersion().split('.')[0] >= 10) args.push('-Dos.name=Windows 10 -Dos.version=10.0')
@@ -67,6 +71,7 @@ export default class ArgumentsManager {
     args.push(...this.getLog4jArgs())
     args.push('-Xmx${max_memory}M')
     args.push('-Xms${min_memory}M')
+    args.push('-Dfml.ignoreInvalidMinecraftCertificates=true')
 
     return [...new Set(args)].map((arg) =>
       arg
@@ -74,6 +79,7 @@ export default class ArgumentsManager {
         .replaceAll('${library_directory}', libraryDirectory)
         .replaceAll('${launcher_name}', this.config.serverId)
         .replaceAll('${launcher_version}', '2')
+        .replaceAll('${jar_path}', path_.join(this.config.root, 'versions', this.manifest.id, `${this.manifest.id}.jar`).replaceAll('\\', '/'))
         .replaceAll('${classpath}', classpath)
         .replaceAll('${max_memory}', this.config.memory.max + '')
         .replaceAll('${min_memory}', this.config.memory.min + '')
@@ -109,7 +115,7 @@ export default class ArgumentsManager {
     let args: string[] = this.config.minecraft?.args || []
 
     if (this.manifest.arguments?.game) {
-      ;[...this.manifest.arguments.game, ...(this.loaderManifest?.arguments!.game || [])].forEach((arg) => {
+      ;[...(this.loaderManifest?.arguments!.game || [])].forEach((arg) => {
         if (typeof arg === 'string') {
           args.push(arg)
         } else if (arg.rules && utils.isArgAllowed(arg)) {
@@ -158,14 +164,29 @@ export default class ArgumentsManager {
   private getClasspath(libraries: File[]) {
     let classpath: string[] = []
 
-    libraries.forEach((lib) => {
+    libraries = [...new Set(libraries)]
+
+    for (let i = 0; i < libraries.length; i++) {
+      const lib = libraries[i]
       if (lib.type === 'LIBRARY') {
         const path = path_.join(this.config.root, lib.path, lib.name).replaceAll('\\', '/')
+        const check = libraries.find(
+          (l, j) =>
+            l.path.replaceAll('/', '\\').split('\\').slice(0, -2).join('/') === lib.path.replaceAll('/', '\\').split('\\').slice(0, -2).join('/') &&
+            !l.path.startsWith('versions') &&
+            i !== j
+        )
+        if (check) {
+          const refVersion = lib.path.replaceAll('/', '\\').split('\\').slice(-2, -1).join('')
+          const checkVersion = check.path.replaceAll('/', '\\').split('\\').slice(-2, -1).join('')
+          const isNewer = utils.isNewer(refVersion, checkVersion)
+          if (isNewer) continue
+        }
         classpath.push(path)
       }
-    })
+    }
 
-    return classpath.join(path_.delimiter)
+    return [...new Set([...classpath])].join(path_.delimiter)
   }
 
   private getMainClass() {
