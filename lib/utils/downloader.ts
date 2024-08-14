@@ -31,8 +31,8 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
   /**
    * Download files from the list.
    * @param files List of files to download. This list must include folders.
-   * @param skipCheck Skip files that already exist in the destination folder (force to
-   * download all files).
+   * @param skipCheck [Optional: default is `false`] Skip files that already exist in the 
+   * destination folder (force to download all files).
    */
   async download(files: File[], skipCheck: boolean = false): Promise<void> {
     const filesToDownload: File[] = !skipCheck ? this.getFilesToDownload(files) : files
@@ -73,7 +73,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
         if (!fs.existsSync(filePath)) {
           fs.mkdirSync(filePath, { recursive: true })
         }
-      } else if (!fs.existsSync(filePath) || file.sha1 !== utils.getFileHash(filePath)) {
+      } else if ((!fs.existsSync(filePath) || file.sha1 !== utils.getFileHash(filePath)) && file.url) {
         filesToDownload.push(file)
       }
     })

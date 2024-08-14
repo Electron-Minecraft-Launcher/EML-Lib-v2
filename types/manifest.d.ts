@@ -62,6 +62,7 @@ export interface MinecraftManifest {
      * Old Forge only.
      */
     clientreq?: boolean
+    serverreq?: boolean
   }[]
   logging: {
     client: {

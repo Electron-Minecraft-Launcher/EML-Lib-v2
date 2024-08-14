@@ -28,13 +28,13 @@ export default class LoaderManager extends EventEmitter<FilesManagerEvents & Pat
    * @returns `loaderManifest`: Loader manifest; `installProfile`: Install profile; `libraries`: libraries
    * files; `files`: all files created by the method or that will be created (including `libraries`).
    */
-  setupLoader() {
+  async setupLoader() {
     let setup = { loaderManifest: null as null | MinecraftManifest, installProfile: null as any, libraries: [] as File[], files: [] as File[] }
 
     if (this.loader.loader === 'forge') {
       const forgeLoader = new ForgeLoader(this.config, this.manifest, this.loader)
       forgeLoader.forwardEvents(this)
-      setup = forgeLoader.setup()
+      setup = await forgeLoader.setup()
     }
 
     return setup
