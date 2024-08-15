@@ -15,6 +15,8 @@ import { EMLLibError, ErrorType } from '../../types/errors'
 import { MinecraftManifest } from '../../types/manifest'
 
 /**
+ * Download Java for Minecraft.
+ * 
  * You should not use this class if you launch Minecraft with `java.install: 'auto'` in
  * the configuration.
  */

@@ -7,6 +7,8 @@ import { EMLLibError, ErrorType } from '../../types/errors'
 import { Background as Background_ } from '../../types/background'
 
 /**
+ * Manage the background of the Launcher.
+ * 
  * **Attention!** This class only works with the EML AdminTool. Please do not use it without the AdminTool.
  */
 export default class Background {

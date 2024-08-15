@@ -10,6 +10,9 @@ import { EMLLibError, ErrorType } from '../../types/errors'
 import BufferWriter from './bufferwriter'
 import BufferReader from './bufferreader'
 
+/**
+ * Get the status of a Minecraft server.
+ */
 export default class ServerStatus {
   private ip: string
   private port: number

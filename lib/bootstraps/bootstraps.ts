@@ -14,6 +14,8 @@ import { File } from '../../types/file'
 import { DownloaderEvents } from '../../types/events'
 
 /**
+ * Update your Launcher.
+ * 
  * **Attention!** This class only works with the EML AdminTool. Please do not use it without the AdminTool.
  * @workInProgress
  */

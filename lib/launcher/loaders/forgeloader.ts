@@ -4,7 +4,7 @@
  */
 
 import { FullConfig } from '../../../types/config'
-import { File, Loader } from '../../../types/file'
+import { ExtraFile, File, Loader } from '../../../types/file'
 import { Artifact, MinecraftManifest } from '../../../types/manifest'
 import AdmZip from 'adm-zip'
 import fs from 'fs'
@@ -34,7 +34,6 @@ export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
   async setup() {
     const forgePath = path_.join(this.config.root, this.loader.file!.path)
     const minecraftPath = path_.join(this.config.root, 'versions', this.manifest.id)
-    console.log(path_.join(forgePath, this.loader.file!.name))
     const zip = new AdmZip(path_.join(forgePath, this.loader.file!.name))
     const jar = new AdmZip(path_.join(minecraftPath, `${this.manifest.id}.jar`))
 
@@ -69,7 +68,7 @@ export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
 
   private async extractJar(forgePath: string, zip: AdmZip) {
     let files: File[] = []
-    let libraries: File[] = []
+    let libraries: ExtraFile[] = []
     let i = 0
 
     //* Extract install profile
@@ -95,7 +94,7 @@ export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
       const universalExtractPath = path_.join(this.config.root, 'libraries', universalPath)
       if (!fs.existsSync(universalExtractPath)) fs.mkdirSync(universalExtractPath, { recursive: true })
       fs.writeFileSync(path_.join(universalExtractPath, universalName), zip.getEntry(installProfile.filePath)!.getData())
-      libraries.push({ name: universalName, path: path_.join('libraries', universalPath), url: '', type: 'LIBRARY' })
+      libraries.push({ name: universalName, path: path_.join('libraries', universalPath), url: '', type: 'LIBRARY', extra: 'INSTALL' })
       i++
       this.emit('extract_progress', { filename: installProfile.filePath })
     } else if (installProfile.path) {
@@ -108,7 +107,13 @@ export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
         .forEach((entry) => {
           if (!entry.entryName.endsWith('.jar')) return
           fs.writeFileSync(path_.join(universalExtractPath, path_.basename(entry.entryName)), entry.getData())
-          libraries.push({ name: path_.basename(entry.entryName), path: path_.join('libraries', universalPath), url: '', type: 'LIBRARY' })
+          libraries.push({
+            name: path_.basename(entry.entryName),
+            path: path_.join('libraries', universalPath),
+            url: '',
+            type: 'LIBRARY',
+            extra: 'INSTALL'
+          })
           i++
           this.emit('extract_progress', { filename: path_.basename(entry.entryName) })
         })
@@ -129,13 +134,43 @@ export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
     }
 
     //* Get libraries
-    const forgeLibraries = [...new Set([...forgeManifest.libraries, ...(installProfile.libraries || [])] as MinecraftManifest['libraries'])]
+    libraries.push(...(await this.formatLibraries(forgeManifest.libraries, 'LOADER', installProfile)))
+    libraries.push(...(await this.formatLibraries(installProfile.libraries, 'INSTALL', installProfile)))
 
-    const skip = installProfile.path || installProfile.filePath ? ['net.minecraftforge:forge:', 'net.minecraftforge:minecraftforge:'] : []
+    files.push(...libraries)
 
-    for (const lib of forgeLibraries) {
-      if (skip.some((s) => (lib.name + '').includes(s)) && !lib.downloads?.artifact?.url) continue
+    this.emit('extract_end', { amount: i })
 
+    return { loaderManifest: forgeManifest, installProfile: installProfile, libraries: libraries, files: files }
+  }
+
+  private async getMirrorUrl(lib: any) {
+    const mirrors = lib.url ? [lib.url] : ['https://libraries.minecraft.net', 'https://maven.minecraftforge.net/', 'https://maven.creeperhost.net/']
+
+    for (const mirror of mirrors) {
+      const url = `${mirror}${utils.getLibraryPath(lib.name!).replaceAll('\\', '/')}${utils.getLibraryName(lib.name!)}`
+      const res1 = await fetch(url)
+        .then((res) => (res.headers.get('Content-Length') || 0) as number)
+        .catch(() => false as false)
+
+      if (!res1) continue
+
+      const res2 = await fetch(`${url}.sha1`)
+        .then((res) => res.text())
+        .catch(() => false as false)
+
+      if (!res2) continue
+
+      return { url: url, size: +res1, sha1: res2 }
+    }
+
+    return { url: '', size: 0, sha1: '' }
+  }
+
+  private async formatLibraries(libs: MinecraftManifest['libraries'], extra: 'INSTALL' | 'LOADER', installProfile: any) {
+    let libraries: ExtraFile[] = []
+
+    for (const lib of libs) {
       let type: 'LIBRARY' | 'NATIVE'
       let artifact: Artifact | undefined
       let native: string | undefined
@@ -175,37 +210,11 @@ export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
         url: artifact.url,
         sha1: artifact.sha1,
         size: artifact.size,
-        type: type
+        type: type,
+        extra: extra
       })
     }
 
-    files.push(...libraries)
-
-    this.emit('extract_end', { amount: i })
-
-    return { loaderManifest: forgeManifest, installProfile: installProfile, libraries: libraries, files: files }
-  }
-
-  private async getMirrorUrl(lib: any) {
-    const mirrors = lib.url ? [lib.url] : ['https://libraries.minecraft.net', 'https://maven.minecraftforge.net/', 'https://maven.creeperhost.net/']
-
-    for (const mirror of mirrors) {
-      const url = `${mirror}${utils.getLibraryPath(lib.name!).replaceAll('\\', '/')}${utils.getLibraryName(lib.name!)}`
-      const res1 = await fetch(url)
-        .then((res) => (res.headers.get('Content-Length') || 0) as number)
-        .catch(() => false as false)
-
-      if (!res1) continue
-
-      const res2 = await fetch(`${url}.sha1`)
-        .then((res) => res.text())
-        .catch(() => false as false)
-
-      if (!res2) continue
-
-      return { url: url, size: +res1, sha1: res2 }
-    }
-
-    return { url: '', size: 0, sha1: '' }
+    return libraries
   }
 }

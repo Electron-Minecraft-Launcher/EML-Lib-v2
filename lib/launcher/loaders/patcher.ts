@@ -10,7 +10,7 @@ import { MinecraftManifest } from '../../../types/manifest'
 import utils from '../../utils/utils'
 import fs from 'fs'
 import path_ from 'path'
-import { spawnSync } from 'child_process'
+import { spawn } from 'child_process'
 import { File } from '../../../types/file'
 import EventEmitter from '../../utils/events'
 import { PatcherEvents } from '../../../types/events'
@@ -29,7 +29,7 @@ export default class Patcher extends EventEmitter<PatcherEvents> {
     this.installProfile = installProfile
   }
 
-  patch() {
+  async patch() {
     const files = this.isPatched()
     let i = 0
 
@@ -40,8 +40,8 @@ export default class Patcher extends EventEmitter<PatcherEvents> {
 
     const processors = this.installProfile.processors
 
-    processors.forEach((processor: any) => {
-      if (processor?.sides && !processor.sides.includes('client')) return
+    for (const processor of processors) {
+      if (processor?.sides && !processor.sides.includes('client')) continue
 
       const jarExtractPathName = path_.join(this.config.root, 'libraries', utils.getLibraryPath(processor.jar), utils.getLibraryName(processor.jar))
       const args = (processor.args as string[]).map((arg) => this.mapArg(arg)).map((arg) => this.mapPath(arg))
@@ -50,15 +50,22 @@ export default class Patcher extends EventEmitter<PatcherEvents> {
       )
       const mainClass = this.getJarMain(jarExtractPathName)!
 
-      const patch = spawnSync(
-        `"${this.config.java.absolutePath.replace('${X}', this.manifest.javaVersion?.majorVersion + '' || '8')}"`,
-        ['-classpath', [`"${jarExtractPathName}"`, ...classpath].join(path_.delimiter), mainClass, ...args],
-        { shell: true }
-      )
+      await new Promise((resolve, reject) => {
+        const patch = spawn(
+          `"${this.config.java.absolutePath.replace('${X}', this.manifest.javaVersion?.majorVersion + '' || '8')}"`,
+          ['-classpath', [`"${jarExtractPathName}"`, ...classpath].join(path_.delimiter), mainClass, ...args],
+          { shell: true }
+        )
 
-      this.emit('patch_progress', { filename: utils.getLibraryName(processor.jar) })
-      i++
-    })
+        patch.stdout.on('data', (data: Buffer) => this.emit('patch_debug', data.toString('utf8').replace(/\n$/, '')))
+        patch.stderr.on('data', (data: Buffer) => this.emit('patch_debug', data.toString('utf8').replace(/\n$/, '')))
+        patch.on('close', (code) => {
+          this.emit('patch_progress', { filename: utils.getLibraryName(processor.jar) })
+          i++
+          resolve(code)
+        })
+      })
+    }
 
     this.emit('patch_end', { amount: i })
 

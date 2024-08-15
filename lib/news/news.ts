@@ -7,6 +7,8 @@ import { EMLLibError, ErrorType } from '../../types/errors'
 import { News as News_, NewsCategory } from '../../types/news'
 
 /**
+ * Manage the News of the Launcher.
+ * 
  * **Attention!** This class only works with the EML AdminTool. Please do not use it without the AdminTool.
  */
 export default class News {

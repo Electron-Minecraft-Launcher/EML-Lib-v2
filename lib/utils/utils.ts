@@ -8,6 +8,7 @@ import path_ from 'path'
 import fs from 'fs'
 import crypto from 'crypto'
 import os from 'os'
+import { ExtraFile } from '../../types/file'
 
 class Utils {
   /**
@@ -47,9 +48,8 @@ class Utils {
    * @returns The architecture (`'x64'` or `'x86'`).
    */
   getArch_MCCode() {
-    if (process.arch.includes('64')) return 'x64'
-    if (process.arch.includes('32')) return 'x86'
-    throw new EMLLibError(ErrorType.UNKNOWN_OS, 'Unknown architecture')
+    if (process.arch.includes('x')) return 'x86';
+    return 'x64'
   }
 
   getOSVersion() {
@@ -159,8 +159,9 @@ class Utils {
    * @returns The name of the library.
    */
   getLibraryName(libName: string) {
-    const l = libName.split(':')
-    return `${l[1]}-${l[2]}${l[3] ? '-' + l[3] : ''}.jar`.replace('@', '.')
+    const ext = libName.match(/@([a-z]*)$/) ? libName.split('@').pop() : 'jar'
+    const l = libName.replace(/@([a-z]*)$/, '').split(':')
+    return `${l[1]}-${l[2]}${l[3] ? '-' + l[3] : ''}.${ext}`
   }
 
   /**
@@ -170,7 +171,7 @@ class Utils {
    * @returns The path of the library.
    */
   getLibraryPath(libName: string, ...path: string[]) {
-    const l = libName.split(':')
+    const l = libName.replace(/@([a-z]*)$/, '').split(':')
     return path_.join(...path, `${l[0].replace(/\./g, '/')}/${l[1]}/${l[2]}/`)
   }
 
@@ -178,19 +179,41 @@ class Utils {
    * Check if a version is newer than another.
    * @param refVersion Reference version.
    * @param checkVersion Version to check.
-   * @returns `true` if `checkVersion` is newer than `refVersion`, `false` otherwise.
+   * @returns `true` if `checkVersion` is newer than `refVersion`, `false` if `checkVersion` is older than
+   * `refVersion`, `null` if the versions are the same.
    */
-  isNewer(refVersion: string, checkVersion: string) {
-    const ref = refVersion.split('.').map((v) => +v.split('-').shift()!)
-    const check = checkVersion.split('.').map((v) => +v.split('-').shift()!)
+  isNewer(ref: ExtraFile, check: ExtraFile) {
+    if (ref.sha1 === check.sha1) return null // Same file, so same version
+    if (ref.extra === 'MINECRAFT' && check.extra !== 'MINECRAFT') return false // Minecraft always wins
+    if (ref.extra !== 'MINECRAFT' && check.extra === 'MINECRAFT') return true // Minecraft always wins
 
-    if (refVersion === checkVersion) return null
+    if (ref.name.split('-').pop() !== check.name.split('-').pop()) return false // Different libraries, so keep both of them (always return false)
 
-    for (let i = 0; i < ref.length; i++) {
-      if (!check[i] + '' && ref[i]) check.push(0)
-      if (check[i] + '' && !ref[i]) ref.push(0)
-      if (check[i] > ref[i]) return true
-      if (check[i] < ref[i]) return false
+    // Parse version from path
+    const vRef = path_
+      .join(ref.path, '/')
+      .replaceAll('/', '\\')
+      .replace(/\\$/, '')
+      .split('\\')
+      .slice(0, -1)
+      .pop()!
+      .split('.')
+      .map((v) => +v.split('-').shift()!)
+    const vCheck = path_
+      .join(check.path, '/')
+      .replaceAll('/', '\\')
+      .replace(/\\$/, '')
+      .split('\\')
+      .slice(0, -1)
+      .pop()!
+      .split('.')
+      .map((v) => +v.split('-').shift()!)
+
+    for (let i = 0; i < vRef.length; i++) {
+      if (!vCheck[i] + '' && vRef[i]) vCheck.push(0)
+      if (vCheck[i] + '' && !vRef[i]) vRef.push(0)
+      if (vCheck[i] > vRef[i]) return true
+      if (vCheck[i] < vRef[i]) return false
     }
 
     return false

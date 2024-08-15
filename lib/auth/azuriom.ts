@@ -6,6 +6,9 @@
 import { Account } from '../../types/account'
 import { EMLLibError, ErrorType } from '../../types/errors'
 
+/**
+ * Authenticate a user with [Azuriom](https://azuriom.com/).
+ */
 export default class AzAuth {
   private url: string
 

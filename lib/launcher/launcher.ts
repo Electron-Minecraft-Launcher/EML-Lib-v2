@@ -17,9 +17,11 @@ import LoaderManager from './loadermanager'
 import ArgumentsManager from './argumentsmanager'
 import { spawn } from 'child_process'
 
-export default class Launcher extends EventEmitter<
-  LauncherEvents & DownloaderEvents & CleanerEvents & FilesManagerEvents & JavaEvents & PatcherEvents
-> {
+/**
+ * Launch Minecraft.
+ * @workInProgress
+ */
+export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEvents & CleanerEvents & FilesManagerEvents & JavaEvents & PatcherEvents> {
   private config: FullConfig
 
   /**
@@ -70,6 +72,8 @@ export default class Launcher extends EventEmitter<
 
   /**
    * Launch Minecraft.
+   *
+   * This method will patch the [Log4j vulnerability](https://help.minecraft.net/hc/en-us/articles/4416199399693-Security-Vulnerability-in-Minecraft-Java-Edition).
    */
   async launch() {
     //* Init launch
@@ -145,7 +149,7 @@ export default class Launcher extends EventEmitter<
     //* Path loader
     this.emit('launch_patch_loader')
 
-    const patchedFiles = loaderManager.patchLoader(loaderFiles.installProfile)
+    const patchedFiles = await loaderManager.patchLoader(loaderFiles.installProfile)
 
     //* Clean
     this.emit('launch_clean')
@@ -166,8 +170,9 @@ export default class Launcher extends EventEmitter<
     //* Launch
     this.emit('launch_launch', { version: manifest.id, loader: loader.loader, loaderVersion: loader.loader_version })
 
-    const args = argumentsManager.getArgs([...loaderFiles.libraries, ...librariesFiles.libraries], loaderFiles.loaderManifest)
+    const args = argumentsManager.getArgs([...loaderFiles.libraries, ...librariesFiles.libraries], loader, loaderFiles.loaderManifest)
 
+    const blindArgs = args.map((arg, i) => (i === args.findIndex((p) => p === '--accessToken') + 1) ? '**********' : arg)
     this.emit('launch_debug', `Launching Minecraft with args: ${args.join(' ')}`)
 
     this.run(this.config.java.absolutePath.replace('${X}', manifest.javaVersion?.majorVersion + '' || '8'), args)

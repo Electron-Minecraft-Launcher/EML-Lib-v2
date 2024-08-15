@@ -5,7 +5,7 @@
 
 import { FullConfig } from '../../types/config'
 import { FilesManagerEvents, PatcherEvents } from '../../types/events'
-import { File, Loader } from '../../types/file'
+import { ExtraFile, File, Loader } from '../../types/file'
 import { MinecraftManifest } from '../../types/manifest'
 import EventEmitter from '../utils/events'
 import ForgeLoader from './loaders/forgeloader'
@@ -29,7 +29,7 @@ export default class LoaderManager extends EventEmitter<FilesManagerEvents & Pat
    * files; `files`: all files created by the method or that will be created (including `libraries`).
    */
   async setupLoader() {
-    let setup = { loaderManifest: null as null | MinecraftManifest, installProfile: null as any, libraries: [] as File[], files: [] as File[] }
+    let setup = { loaderManifest: null as null | MinecraftManifest, installProfile: null as any, libraries: [] as ExtraFile[], files: [] as File[] }
 
     if (this.loader.loader === 'forge') {
       const forgeLoader = new ForgeLoader(this.config, this.manifest, this.loader)
@@ -45,11 +45,11 @@ export default class LoaderManager extends EventEmitter<FilesManagerEvents & Pat
    * @param installProfile The install profile from `LoaderManager.setupLoader()`.
    * @returns `files`: all files created by the method.
    */
-  patchLoader(installProfile: any) {
+  async patchLoader(installProfile: any) {
     if (this.loader.loader === 'forge' && installProfile) {
       const patcher = new Patcher(this.config, this.manifest, this.loader, installProfile)
       patcher.forwardEvents(this)
-      return { files: patcher.patch() }
+      return { files: await patcher.patch() }
     }
 
     return { files: [] }

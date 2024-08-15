@@ -25,9 +25,9 @@ export interface LauncherEvents {
   launch_check_java: []
   launch_clean: []
   launch_launch: [{ version: string; loader: 'vanilla' | 'forge', loaderVersion: string | null }]
-  launch_debug: [string]
   launch_data: [string]
   launch_close: [number]
+  launch_debug: [string]
 }
 
 export interface FilesManagerEvents {
@@ -68,4 +68,5 @@ export interface PatcherEvents {
   patch_progress: [{ filename: string }]
   patch_error: [{ filename: string; message: Error | string }]
   patch_end: [{ amount: number }]
+  patch_debug: [string]
 }
