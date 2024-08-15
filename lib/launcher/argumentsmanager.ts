@@ -7,17 +7,19 @@ import { FullConfig } from '../../types/config'
 import { MinecraftManifest } from '../../types/manifest'
 import utils from '../utils/utils'
 import path_ from 'path'
-import { File } from '../../types/file'
+import { ExtraFile, File, Loader } from '../../types/file'
 
 export default class ArgumentsManager {
   private config: FullConfig
   private manifest: MinecraftManifest
   private loaderManifest: MinecraftManifest | null
+  private loader: Loader | null
 
   constructor(config: FullConfig, manifest: MinecraftManifest) {
     this.config = config
     this.manifest = manifest
     this.loaderManifest = null
+    this.loader = null
   }
 
   /**
@@ -25,8 +27,9 @@ export default class ArgumentsManager {
    * @param libraries The libraries of the game (including loader libraries).
    * @returns The arguments to launch the game.
    */
-  getArgs(libraries: File[], loaderManifest: MinecraftManifest | null = null) {
+  getArgs(libraries: ExtraFile[], loader: Loader | null, loaderManifest: MinecraftManifest | null = null) {
     this.loaderManifest = loaderManifest
+    this.loader = loader
 
     const jvmArgs = this.getJvmArgs(libraries)
     const mainClass = this.getMainClass()
@@ -35,7 +38,7 @@ export default class ArgumentsManager {
     return [...jvmArgs, mainClass, ...minecraftArgs]
   }
 
-  private getJvmArgs(libraries: File[]) {
+  private getJvmArgs(libraries: ExtraFile[]) {
     const nativeDirectory = path_.join(this.config.root, 'bin', 'natives').replaceAll('\\', '/')
     const libraryDirectory = path_.join(this.config.root, 'libraries').replaceAll('\\', '/')
     const classpath = this.getClasspath(libraries)
@@ -43,7 +46,6 @@ export default class ArgumentsManager {
     let args: string[] = this.config.java?.args || []
 
     if (this.manifest.arguments?.jvm) {
-      console.log('HERE')
       ;[...this.manifest.arguments.jvm, ...(this.loaderManifest?.arguments!.jvm || [])].forEach((arg) => {
         if (typeof arg === 'string') {
           args.push(arg)
@@ -73,12 +75,13 @@ export default class ArgumentsManager {
     args.push('-Xms${min_memory}M')
     args.push('-Dfml.ignoreInvalidMinecraftCertificates=true')
 
-    return [...new Set(args)].map((arg) =>
+    return args.map((arg) =>
       arg
         .replaceAll('${natives_directory}', nativeDirectory)
         .replaceAll('${library_directory}', libraryDirectory)
-        .replaceAll('${launcher_name}', this.config.serverId)
+        .replaceAll('${launcher_name}', `${this.config.serverId}-launcher`)
         .replaceAll('${launcher_version}', '2')
+        .replaceAll('${version_name}', this.manifest.id)
         .replaceAll('${jar_path}', path_.join(this.config.root, 'versions', this.manifest.id, `${this.manifest.id}.jar`).replaceAll('\\', '/'))
         .replaceAll('${classpath}', classpath)
         .replaceAll('${max_memory}', this.config.memory.max + '')
@@ -88,7 +91,7 @@ export default class ArgumentsManager {
   }
 
   /**
-   * Patch log4shell vulnerability.
+   * Patch Log4j vulnerability.
    * @see [help.minecraft.net](https://help.minecraft.net/hc/en-us/articles/4416199399693-Security-Vulnerability-in-Minecraft-Java-Edition)
    */
   private getLog4jArgs() {
@@ -115,7 +118,7 @@ export default class ArgumentsManager {
     let args: string[] = this.config.minecraft?.args || []
 
     if (this.manifest.arguments?.game) {
-      ;[...(this.loaderManifest?.arguments!.game || [])].forEach((arg) => {
+      ;[...this.manifest.arguments.game, ...(this.loaderManifest?.arguments!.game || [])].forEach((arg) => {
         if (typeof arg === 'string') {
           args.push(arg)
         } else if (arg.rules && utils.isArgAllowed(arg)) {
@@ -161,13 +164,14 @@ export default class ArgumentsManager {
     )
   }
 
-  private getClasspath(libraries: File[]) {
+  private getClasspath(libraries: ExtraFile[]) {
     let classpath: string[] = []
 
     libraries = [...new Set(libraries)]
 
     for (let i = 0; i < libraries.length; i++) {
       const lib = libraries[i]
+      if (lib.extra === 'INSTALL') continue
       if (lib.type === 'LIBRARY') {
         const path = path_.join(this.config.root, lib.path, lib.name).replaceAll('\\', '/')
         const check = libraries.find(
@@ -176,12 +180,7 @@ export default class ArgumentsManager {
             !l.path.startsWith('versions') &&
             i !== j
         )
-        if (check) {
-          const refVersion = lib.path.replaceAll('/', '\\').split('\\').slice(-2, -1).join('')
-          const checkVersion = check.path.replaceAll('/', '\\').split('\\').slice(-2, -1).join('')
-          const isNewer = utils.isNewer(refVersion, checkVersion)
-          if (isNewer) continue
-        }
+        if (check && utils.isNewer(lib, check)) continue
         classpath.push(path)
       }
     }

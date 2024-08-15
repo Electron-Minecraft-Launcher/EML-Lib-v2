@@ -2,23 +2,9 @@
 
 **Electron Minecraft Launcher Lib (EML Lib) is a Node.js library. It permits to authenticate, download Java and Minecraft and launch Minecraft.**
 
-[<img src="https://img.shields.io/badge/Discord-Electron_Minecraft_Launcher-5561e6?&style=for-the-badge">](https://discord.gg/YVB4k6HzAY)
+[<img src="https://img.shields.io/badge/Discord-EML-5561e6?&style=for-the-badge">](https://discord.gg/YVB4k6HzAY)
 [<img src="https://img.shields.io/badge/platforms-Windows%2C%20macOS%2C%20Linux-0077DA?style=for-the-badge&color=0077DA">](#platforms)
-[<img src="https://img.shields.io/badge/version-2.0.0--alpha.2-orangered?style=for-the-badge&color=orangered">](package.json)
-
----
-
-## <span id="platforms">Platform compatibility</span>
-
-| OS (platform)              | Supported?     | Minimum version supported  |
-| -------------------------- | -------------- | -------------------------- |
-| Windows (win32)            | Yes            | Windows 7 (Windows NT 6.1) |
-| macOS (Darwin)             | Yes            | Mac OS X Lion (10.7)       |
-| Linux, including Chrome OS | Yes            | Variable                   |
-| Others                     | Not officially | -                          |
-
-> [!WARNING]
-> No support will be provided for older versions of Windows, macOS and Linux, or for other operating systems.
+[<img src="https://img.shields.io/badge/version-2.0.0--alpha.3-orangered?style=for-the-badge&color=orangered">](package.json)
 
 ---
 
@@ -73,6 +59,18 @@ launcher.launch()
 
 Please refer to the [documentation](https://github.com/Electron-Minecraft-Launcher/EML-Lib-v2/wiki) for more information.
 
+## Platform compatibility
+
+| OS (platform)              | Supported?     | Minimum version supported  |
+| -------------------------- | -------------- | -------------------------- |
+| Windows (win32)            | Yes            | Windows 7 (Windows NT 6.1) |
+| macOS (Darwin)             | Yes            | Mac OS X Lion (10.7)       |
+| Linux, including Chrome OS | Yes            | Variable                   |
+| Others                     | Not officially | -                          |
+
+> [!WARNING]
+> No support will be provided for older versions of Windows, macOS and Linux, or for other operating systems.
+
 ## Tests
 
 The library have been tested on:
@@ -85,21 +83,33 @@ The library have been tested on:
     <th>Result</th>
   </tr>
   <tr>
-    <td>1.21.1</td>
-    <td>Windows 11 (26120.1252)</td>
+    <td rowspan="2">1.21.1</td>
+    <td rowspan="2">Windows 11 (26120.1252)</td>
     <td>Vanilla</td>
     <td>OK</td>
   </tr>
   <tr>
-    <td>1.19.4</td>
-    <td>Windows 11 (26120.1252)</td>
+    <td>Forge (52.0.3)</td>
+    <td>OK</td>
+  </tr>
+  <tr>
+    <td rowspan="2">1.19.4</td>
+    <td rowspan="2">Windows 11 (26120.1252)</td>
     <td>Vanilla</td>
     <td>OK</td>
   </tr>
   <tr>
-    <td>1.17.1</td>
-    <td>Windows 11 (26120.1252)</td>
+    <td>Forge (45.3.0)</td>
+    <td>OK</td>
+  </tr>
+  <tr>
+    <td rowspan="2">1.17.1</td>
+    <td rowspan="2">Windows 11 (26120.1252)</td>
     <td>Vanilla</td>
+    <td>OK</td>
+  </tr>
+  <tr>
+    <td>Forge (37.1.1)</td>
     <td>OK</td>
   </tr>
   <tr>

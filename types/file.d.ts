@@ -47,3 +47,7 @@ export interface Loader {
   loader_type?: 'installer' | 'universal' | 'client'
   file?: File
 }
+
+export interface ExtraFile extends File {
+  extra: 'INSTALL' | 'LOADER' | 'MINECRAFT'
+}

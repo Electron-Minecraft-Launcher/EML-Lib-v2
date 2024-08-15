@@ -6,7 +6,7 @@
 
 import { FullConfig } from '../../types/config'
 import { EMLLibError, ErrorType } from '../../types/errors'
-import { File, Loader } from '../../types/file'
+import { ExtraFile, File, Loader } from '../../types/file'
 import { Artifact, MinecraftManifest, Assets } from '../../types/manifest'
 import utils from '../utils/utils'
 import path_ from 'path'
@@ -66,8 +66,8 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
    * be created (including `libraries`).
    */
   async getLibraries() {
-    let libraries: File[] = []
     let files: File[] = []
+    let libraries: ExtraFile[] = []
 
     if (!fs.existsSync(path_.join(this.config.root, 'versions', this.manifest.id))) {
       fs.mkdirSync(path_.join(this.config.root, 'versions', this.manifest.id), { recursive: true })
@@ -110,7 +110,8 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
           url: artifact.url,
           sha1: artifact.sha1,
           size: artifact.size,
-          type: type
+          type: type,
+          extra: 'MINECRAFT'
         })
       }
     })
@@ -121,11 +122,12 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
       url: this.manifest.downloads.client.url,
       sha1: this.manifest.downloads.client.sha1,
       size: this.manifest.downloads.client.size,
-      type: 'LIBRARY'
+      type: 'LIBRARY',
+      extra: 'MINECRAFT'
     })
 
     if (this.loader.file) {
-      libraries.push(this.loader.file)
+      libraries.push({ ...this.loader.file, extra: 'LOADER' })
     }
 
     files.push(...libraries)
@@ -139,8 +141,8 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
    * created (including `assets`).
    */
   async getAssets() {
-    let assets: File[] = []
     let files: File[] = []
+    let assets: File[] = []
 
     const res = await fetch(this.manifest.assetIndex.url)
       .then((res) => res.json() as Promise<Assets>)
@@ -172,7 +174,7 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
   }
 
   /**
-   * Get log4j files to patch the log4shell vulnerability.
+   * Get Log4j files to patch the Log4shell.
    * @returns `log4j`: Log4j files; `files`: all files created by this method or that will be
    * created (including `log4j`).
    * @see [help.minecraft.net](https://help.minecraft.net/hc/en-us/articles/4416199399693-Security-Vulnerability-in-Minecraft-Java-Edition)

@@ -8,10 +8,12 @@ import { EMLLibError, ErrorType } from './../../types/errors'
 import { v4 } from 'uuid'
 
 /**
+ * Authenticate a user with a crack account.
  * @deprecated This auth method is not secure, use it only for testing purposes or for local servers!
  */
 export default class CrackAuth {
   /**
+   * 
    * @deprecated This auth method is not secure, use it only for testing purposes or for local servers!
    */
   auth(username: string): Account {
