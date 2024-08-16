@@ -135,7 +135,7 @@ export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
 
     //* Get libraries
     libraries.push(...(await this.formatLibraries(forgeManifest.libraries, 'LOADER', installProfile)))
-    libraries.push(...(await this.formatLibraries(installProfile.libraries, 'INSTALL', installProfile)))
+    if (installProfile.libraries) libraries.push(...(await this.formatLibraries(installProfile.libraries, 'INSTALL', installProfile)))
 
     files.push(...libraries)
 
@@ -201,6 +201,7 @@ export default class ForgeLoader extends EventEmitter<FilesManagerEvents> {
       } else {
         artifact = await this.getMirrorUrl(lib)
         name = utils.getLibraryName(lib.name!)
+        if (type === 'NATIVE') name = name.replace('.jar', `-${native}.jar`)
         path = utils.getLibraryPath(lib.name!, 'libraries')
       }
 

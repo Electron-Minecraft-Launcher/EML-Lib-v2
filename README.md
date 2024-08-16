@@ -4,7 +4,7 @@
 
 [<img src="https://img.shields.io/badge/Discord-EML-5561e6?&style=for-the-badge">](https://discord.gg/YVB4k6HzAY)
 [<img src="https://img.shields.io/badge/platforms-Windows%2C%20macOS%2C%20Linux-0077DA?style=for-the-badge&color=0077DA">](#platforms)
-[<img src="https://img.shields.io/badge/version-2.0.0--alpha.3-orangered?style=for-the-badge&color=orangered">](package.json)
+[<img src="https://img.shields.io/badge/version-2.0.0--beta.1-orangered?style=for-the-badge&color=orangered">](package.json)
 
 ---
 
@@ -103,6 +103,11 @@ The library have been tested on:
     <td>OK</td>
   </tr>
   <tr>
+    <td>1.18.2</td>
+    <td>Windows 11 (26120.961)</td>
+    <td>Forge (40.2.0)</td>
+    <td>OK</td>
+  <tr>
     <td rowspan="2">1.17.1</td>
     <td rowspan="2">Windows 11 (26120.1252)</td>
     <td>Vanilla</td>
@@ -113,9 +118,18 @@ The library have been tested on:
     <td>OK</td>
   </tr>
   <tr>
-    <td>1.16.5</td>
-    <td>Windows 11 (26120.1252)</td>
+    <td rowspan="2">1.16.5</td>
+    <td rowspan="2">Windows 11 (26120.1252)</td>
     <td>Vanilla</td>
+    <td rowspan="2">Warn: Multiplayer not available.</td>
+  </tr>
+  <tr>
+    <td>Forge (36.2.34)</td>
+  </tr>
+  <tr>
+    <td>1.14.4</td>
+    <td>Windows 11 (26120.961)</td>
+    <td>Forge (28.2.26)</td>
     <td>OK</td>
   </tr>
   <tr>
@@ -149,6 +163,9 @@ The library have been tested on:
     <td>Vanilla</td>
     <td>OK</td>
 </table>
+
+> [!WARNING]
+> Forge is currently not working on Minecraft 1.5.2 and below.
 
 ## Contributing
 

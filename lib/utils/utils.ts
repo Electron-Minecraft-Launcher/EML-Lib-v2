@@ -184,8 +184,8 @@ class Utils {
    */
   isNewer(ref: ExtraFile, check: ExtraFile) {
     if (ref.sha1 === check.sha1) return null // Same file, so same version
-    if (ref.extra === 'MINECRAFT' && check.extra !== 'MINECRAFT') return false // Minecraft always wins
-    if (ref.extra !== 'MINECRAFT' && check.extra === 'MINECRAFT') return true // Minecraft always wins
+    // if (ref.extra === 'MINECRAFT' && check.extra !== 'MINECRAFT') return false // Minecraft always wins
+    // if (ref.extra !== 'MINECRAFT' && check.extra === 'MINECRAFT') return true // Minecraft always wins
 
     if (ref.name.split('-').pop() !== check.name.split('-').pop()) return false // Different libraries, so keep both of them (always return false)
 

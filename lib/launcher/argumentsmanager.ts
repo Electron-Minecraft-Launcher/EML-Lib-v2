@@ -150,7 +150,10 @@ export default class ArgumentsManager {
           .replaceAll('${auth_player_name}', this.config.account.name)
           .replaceAll('${auth_uuid}', this.config.account.uuid)
           .replaceAll('${auth_access_token}', this.config.account.accessToken)
-          .replaceAll('${user_type}', this.manifest.id.startsWith('1.16') ? 'Xbox' : this.config.account.meta.type)
+          .replaceAll(
+            '${user_type}',
+            this.manifest.id.startsWith('1.16') && this.config.account.meta.type === 'msa' ? 'Xbox' : this.config.account.meta.type
+          )
           .replaceAll('${version_name}', this.manifest.id)
           .replaceAll('${game_directory}', gameDirectory)
           .replaceAll('${assets_root}', assetsDirectory)
@@ -178,7 +181,8 @@ export default class ArgumentsManager {
           (l, j) =>
             l.path.replaceAll('/', '\\').split('\\').slice(0, -2).join('/') === lib.path.replaceAll('/', '\\').split('\\').slice(0, -2).join('/') &&
             !l.path.startsWith('versions') &&
-            i !== j
+            i !== j &&
+            l.extra !== 'INSTALL'
         )
         if (check && utils.isNewer(lib, check)) continue
         classpath.push(path)

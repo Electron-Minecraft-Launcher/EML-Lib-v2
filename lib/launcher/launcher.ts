@@ -128,6 +128,7 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
     //* Install loader
     this.emit('launch_install_loader', loader)
 
+    await new Promise((resolve) => setTimeout(resolve, 1000)) // Avoid "Error: ADM-ZIP: Invalid or unsupported zip format. No END header found" error
     const loaderFiles = await loaderManager.setupLoader()
     await downloader.download(loaderFiles.libraries)
 
@@ -172,10 +173,10 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
 
     const args = argumentsManager.getArgs([...loaderFiles.libraries, ...librariesFiles.libraries], loader, loaderFiles.loaderManifest)
 
-    const blindArgs = args.map((arg, i) => (i === args.findIndex((p) => p === '--accessToken') + 1) ? '**********' : arg)
+    const blindArgs = args.map((arg, i) => (i === args.findIndex((p) => p === '--accessToken') + 1 ? '**********' : arg))
     this.emit('launch_debug', `Launching Minecraft with args: ${args.join(' ')}`)
 
-    this.run(this.config.java.absolutePath.replace('${X}', manifest.javaVersion?.majorVersion + '' || '8'), args)
+    this.run(this.config.java.absolutePath.replace('${X}', manifest.javaVersion?.majorVersion.toString() || '8'), args)
   }
 
   private async run(javaPath: string, args: string[]) {
