@@ -218,6 +218,7 @@ export default class FilesManager extends EventEmitter<FilesManagerEvents> {
     }
 
     natives.forEach((native) => {
+      if (!fs.existsSync(path_.join(this.config.root, native.path, native.name))) return
       const zip = new AdmZip(path_.join(this.config.root, native.path, native.name))
       zip.getEntries().forEach((entry) => {
         if (!entry.entryName.startsWith('META-INF')) {

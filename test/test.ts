@@ -7,9 +7,6 @@ async function main() {
     account: new EMLLib.CrackAuth().auth('GoldFrite'),
     cleaning: {
       clean: false
-    },
-    window: {
-      fullscreen: true
     }
   })
 
