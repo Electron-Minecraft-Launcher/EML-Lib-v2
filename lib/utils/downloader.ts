@@ -10,6 +10,7 @@ import fetch from 'node-fetch'
 import EventEmitter from '../utils/events'
 import { DownloaderEvents } from '../../types/events'
 import utils from './utils'
+import { EMLLibError, ErrorType } from '../../types/errors'
 
 export default class Downloader extends EventEmitter<DownloaderEvents> {
   private dest: string
@@ -105,7 +106,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
           message: res.statusText
         })
         this.error = true
-        return
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Error while fetching ${file.name}: ${res.statusText}`)
       }
       if (!res.body) {
         if (t < 5) {
@@ -118,7 +119,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
           message: 'No body'
         })
         this.error = true
-        return
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Error while fetching ${file.name}: ${res.statusText}`)
       }
 
       await new Promise((resolve, reject) => {
@@ -156,7 +157,7 @@ export default class Downloader extends EventEmitter<DownloaderEvents> {
             message: err
           })
           this.error = true
-          reject(err)
+          reject(new EMLLibError(ErrorType.DOWNLOAD_ERROR, `Error while downloading ${file.name}: ${err}`))
         })
 
         res.body.on('end', (val) => {

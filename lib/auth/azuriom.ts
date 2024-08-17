@@ -27,7 +27,7 @@ export default class AzAuth {
    * @param twoFACode [Optional] The 2FA code if the user has 2FA enabled.
    * @returns The account information.
    */
-  async auth(username: string, password: string, twoFACode?: string): Promise<Account> {
+  async auth(username: string, password: string, twoFACode?: string) {
     const res = await fetch(`${this.url}/authenticate`, {
       method: 'POST',
       headers: {
@@ -51,22 +51,22 @@ export default class AzAuth {
     return {
       name: res.username,
       uuid: res.uuid,
-      accessToken: res.accessToken,
-      clientToken: res.clientToken,
+      clientToken: res.uuid,
+      accessToken: res.access_token,
       userProperties: {},
       meta: {
         online: false,
         type: 'azuriom'
       }
-    }
+    } as Account
   }
 
   /**
-   * Verify a user with Azuriom. This method will renew the user's token.
+   * Verify a user with Azuriom.
    * @param user The user account to verify.
    * @returns The renewed account information.
    */
-  async verify(user: Account): Promise<Account> {
+  async verify(user: Account) {
     const res = await fetch(`${this.url}/verify`, {
       method: 'POST',
       headers: {
@@ -91,14 +91,14 @@ export default class AzAuth {
         online: false,
         type: 'azuriom'
       }
-    }
+    } as Account
   }
 
   /**
    * Logout a user from Azuriom.
-   * @param user The account of the user.
+   * @param user The user account to logout.
    */
-  async logout(user: Account): Promise<void> {
+  async logout(user: Account) {
     await fetch(`${this.url}/logout`, {
       method: 'POST',
       headers: {

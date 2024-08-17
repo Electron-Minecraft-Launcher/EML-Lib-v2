@@ -15,7 +15,7 @@ import { DownloaderEvents } from '../../types/events'
 
 /**
  * Update your Launcher.
- * 
+ *
  * **Attention!** This class only works with the EML AdminTool. Please do not use it without the AdminTool.
  * @workInProgress
  */
@@ -33,17 +33,17 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
   /**
    * Check for updates of your Launcher. This method will return the version of the latest Bootstrap, but it will not download it.
    * @param currentVersion The current version of your Launcher. You can get it with `app.getVersion()`.
-   * @returns If an update is available, it will return the Bootstraps object. If not, it will return `false`.
+   * @returns If an update is available, it will return the Bootstraps object. If not, it will return `null`.
    */
-  async checkForUpdate(currentVersion: string): Promise<false | Bootstraps_> {
+  async checkForUpdate(currentVersion: string) {
     let res = await fetch(`${this.url}/bootstraps`, { method: 'GET' })
       .then((res) => res.json())
       .catch((err) => {
-        throw new Error(`Error while fetching Bootstrap from the EML AdminTool: ${err}`)
+        throw new EMLLibError(ErrorType.FETCH_ERROR, `Error while fetching Bootstrap from the EML AdminTool: ${err}`)
       })
 
     if (res.data.version === currentVersion || res.data.version == null || res.data.version == '' || res.data[utils.getOS()] == null) {
-      return false
+      return null
     } else {
       return res.data as Bootstraps_
     }
@@ -53,10 +53,10 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
    * Download the latest Bootstrap from the EML AdminTool.
    * The downloaded Bootstrap will be saved in the temp folder. The function will return the path to the downloaded Bootstrap.
    * This method does not check for update or runs the update, it will always download the latest version.
-   * @param bootstraps The Bootstraps object returned by `Bootstraps.checkForUpdate()`.
+   * @param bootstraps The `Bootstraps` object returned by `Bootstraps.checkForUpdate()`.
    * @returns The path to the downloaded Bootstrap.
    */
-  async download(bootstraps: Bootstraps_): Promise<string> {
+  async download(bootstraps: Bootstraps_) {
     const os = utils.getOS()
     const bootstrap = bootstraps[os] as File | undefined
 
@@ -84,7 +84,7 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
    * If the file does not exist or is not executable, an error will be thrown.
    * This method automatically close the Launcher after the Bootstrap is executed.
    * @workInProgress **This method is not tested yet.**
-   * @param bootstrapPath The path to the downloaded Bootstrap (returned by `Bootstraos.download()`)
+   * @param bootstrapPath The path to the downloaded Bootstrap (returned by `Bootstraps.download()`)
    */
   runUpdate(bootstrapPath: string) {
     const os = utils.getOS()
@@ -102,13 +102,23 @@ export default class Bootstraps extends EventEmitter<DownloaderEvents> {
    * to call each function separately. However, this method will not return any value and give you no control
    * over the process. If you need more control, you should use the other methods.
    * @param currentVersion The current version of your Launcher. You can get it with `app.getVersion()`.
+   * @workInProgress **This method is not tested yet.**
    */
   async checkDownloadAndRun(currentVersion: string) {
     const bootstraps = await this.checkForUpdate(currentVersion)
 
+    let bootstrapPath: string
+
     if (bootstraps) {
-      const bootstrapPath = await this.download(bootstraps)
+      try {
+        bootstrapPath = await this.download(bootstraps)
+      } catch (error) {
+        return
+      }
+
       this.runUpdate(bootstrapPath)
     }
+
+    return
   }
 }

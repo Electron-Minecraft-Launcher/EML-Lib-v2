@@ -18,7 +18,7 @@ export default class MicrosoftAuth {
   private clientId: string
 
   /**
-   * @param mainWindow Your electron application's main window (to create a child window for the Microsoft login).
+   * @param mainWindow Your Electron application's main window (to create a child window for the Microsoft login).
    * @param clientId [Optional] Your Microsoft application's client ID.
    */
   constructor(mainWindow: BrowserWindow, clientId?: string) {
@@ -54,11 +54,11 @@ export default class MicrosoftAuth {
   }
 
   /**
-   * Verify a user with Microsoft. This method will renew the user's token.
-   * @param user The user account to verify.
-   * @returns The renewed account information.
+   * Refresh a user with Microsoft. This method will renew the user's token.
+   * @param user The user account to refresh.
+   * @returns The refreshed account information.
    */
-  async verify(user: Account): Promise<Account> {
+  async refresh(user: Account) {
     let res = await fetch('https://login.live.com/oauth20_token.srf', {
       method: 'POST',
       headers: {
@@ -78,7 +78,7 @@ export default class MicrosoftAuth {
     }
   }
 
-  private async getAccount(authInfo: any): Promise<Account> {
+  private async getAccount(authInfo: any) {
     let xboxLive = await fetch('https://user.auth.xboxlive.com/user/authenticate', {
       method: 'POSt',
       body: JSON.stringify({
@@ -171,7 +171,7 @@ export default class MicrosoftAuth {
         online: true,
         type: 'msa'
       }
-    }
+    } as Account
   }
 
   private async getProfile(mcLogin: any) {

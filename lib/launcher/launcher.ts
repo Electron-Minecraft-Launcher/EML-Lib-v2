@@ -25,7 +25,7 @@ export default class Launcher extends EventEmitter<LauncherEvents & DownloaderEv
   private config: FullConfig
 
   /**
-   * @param config The configuration of the launcher.
+   * @param config The configuration of the Launcher.
    */
   constructor(config: Config) {
     super()

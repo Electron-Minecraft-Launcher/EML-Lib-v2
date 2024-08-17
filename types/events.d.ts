@@ -33,9 +33,9 @@ export interface LauncherEvents {
 export interface FilesManagerEvents {
   extract_progress: [{ filename: string }]
   extract_end: [{ amount: number }]
-  copy_debug: [string]
   copy_progress: [{ filename: string; dest: string }]
   copy_end: [{ amount: number }]
+  copy_debug: [string]
 }
 
 export interface JavaEvents {

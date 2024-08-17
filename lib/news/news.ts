@@ -22,10 +22,10 @@ export default class News {
   }
 
   /**
-   * Get all the news.
+   * Get all the news from the EML AdminTool.
    * @returns The list of News.
    */
-  async getNews(): Promise<News_[]> {
+  async getNews() {
     let res = await fetch(`${this.url}/news`, { method: 'GET' })
       .then((res) => res.json())
       .catch((err) => {
@@ -36,10 +36,10 @@ export default class News {
   }
 
   /**
-   * Get all the categories of the News.
-   * @returns The list of News Categories.
+   * Get all the News categories from the EML AdminTool.
+   * @returns The list of News categories.
    */
-  async getCategories(): Promise<NewsCategory[]> {
+  async getCategories() {
     let res = await fetch(`${this.url}/news/categories`, { method: 'GET' })
       .then((res) => res.json())
       .catch((err) => {
@@ -51,15 +51,17 @@ export default class News {
 
   /**
    * Get the News of a specific category.
-   * @param id The ID of the category (got from `News.getCategories()`).
-   * @returns The News if the category.
+   * @param categoryId The ID of the category (got from `News.getCategories()`).
+   * @returns The News if the category exists.
    */
-  async getNewsByCategory(id: number): Promise<News_[]> {
-    let res = await fetch(`${this.url}/news/categories/${id}`, { method: 'GET' })
+  async getNewsByCategory(categoryId: number) {
+    let res = await fetch(`${this.url}/news/categories/${categoryId}`, { method: 'GET' })
       .then((res) => res.json())
       .catch((err) => {
         throw new EMLLibError(ErrorType.FETCH_ERROR, `Error while fetching News Categories from the EML AdminTool: ${err}`)
       })
+
+    if (res.status === 404) res.data = []
 
     return res.data as News_[]
   }

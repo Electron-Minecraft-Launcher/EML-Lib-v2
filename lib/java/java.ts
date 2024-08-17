@@ -16,7 +16,7 @@ import { MinecraftManifest } from '../../types/manifest'
 
 /**
  * Download Java for Minecraft.
- * 
+ *
  * You should not use this class if you launch Minecraft with `java.install: 'auto'` in
  * the configuration.
  */
@@ -41,18 +41,6 @@ export default class Java extends EventEmitter<DownloaderEvents & JavaEvents> {
     this.minecraftVersion = minecraftVersion
     this.serverId = serverId
     this.url = url
-  }
-
-  /**
-   * Download Java for the Minecraft version.
-   */
-  async download() {
-    const files = await this.getFiles()
-
-    const downloader = new Downloader(utils.getServerFolder(this.serverId))
-    downloader.forwardEvents(this)
-
-    await downloader.download(files)
   }
 
   /**
@@ -98,6 +86,18 @@ export default class Java extends EventEmitter<DownloaderEvents & JavaEvents> {
     })
 
     return files
+  }
+
+  /**
+   * Download Java for the Minecraft version.
+   */
+  async download() {
+    const files = await this.getFiles()
+
+    const downloader = new Downloader(utils.getServerFolder(this.serverId))
+    downloader.forwardEvents(this)
+
+    await downloader.download(files)
   }
 
   /**

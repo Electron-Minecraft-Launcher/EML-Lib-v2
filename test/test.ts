@@ -1,6 +1,8 @@
 import EMLLib from '../index'
 
+
 async function main() {
+  new EMLLib.MicrosoftAuth()
   const launcher = new EMLLib.Launcher({
     url: 'http://localhost:5173',
     serverId: 'goldfrite',
@@ -40,7 +42,9 @@ async function main() {
     launcher.on('clean_progress', (progress) => console.log(`Cleaned ${progress.filename}.`))
     launcher.on('clean_end', (info) => console.log(`Cleaned ${info.amount} files.`))
 
-    launcher.on('launch_launch', (info) => console.log(`\nLaunching Minecraft ${info.version} (${info.loader}${info.loaderVersion ? ` ${info.loaderVersion}` : ''})...`))
+    launcher.on('launch_launch', (info) =>
+      console.log(`\nLaunching Minecraft ${info.version} (${info.loader}${info.loaderVersion ? ` ${info.loaderVersion}` : ''})...`)
+    )
     launcher.on('launch_data', (message) => console.log(message))
     launcher.on('launch_close', (code) => console.log(`Closed with code ${code}.`))
 

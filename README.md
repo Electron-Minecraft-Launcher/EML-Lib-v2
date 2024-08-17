@@ -45,7 +45,7 @@ npm i eml-lib
 
 Quick start using the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2):
 
-```javascript
+```js
 const EMLLib = require('eml-lib')
 
 const launcher = new EMLLib.Launcher({
@@ -198,4 +198,3 @@ Please indicate the following information in your issue:
 <br>
 
 [^1]: Requires the [EML AdminTool](https://github.com/Electron-Minecraft-Launcher/EML-AdminTool-v2).
-

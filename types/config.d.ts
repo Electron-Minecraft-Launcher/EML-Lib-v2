@@ -42,7 +42,8 @@ export interface Config {
     ignored?: string[]
   }
   /**
-   * The player account (use `MicrosoftAuth`, `AzAuth` or `CrackAuth` to get the account).
+   * The player account (use `MicrosoftAuth`, `AzAuth` or `CrackAuth` to get the account, but you should 
+   * **not** authenticate the user directly in the `config`, to be able to handle authentication).
    */
   account: Account
   /**
@@ -54,6 +55,7 @@ export interface Config {
    */
   minecraft?: {
     /**
+     * [Optional: default is `null`]
      * The version of Minecraft you want to install. Set to `'latest_release'` to install the
      * latest release version of Minecraft, or `'latest_snapshot'` to install the latest snapshot.
      * Set to `null` or `undefined` to get the version from the EML AdminTool.
@@ -71,11 +73,12 @@ export interface Config {
    */
   java?: {
     /**
+     * [Optional: default is `'auto'`]
      * Should the launcher install Java automatically? `'auto'` automatically installs Java when
      * calling `Launcher.launch()`. `'manual'` does not install Java automatically. You can use
      * `Java.download()` to install Java manually.
      */
-    install: 'auto' | 'manual'
+    install?: 'auto' | 'manual'
     /**
      * [Optional: default is `undefined`]
      * The absolute path to the Java executable.
@@ -112,10 +115,12 @@ export interface Config {
    */
   window?: {
     /**
+     * [Optional: default is `854`]
      * The width of the Minecraft window.
      */
     width?: number
     /**
+     * [Optional: default is `480`]
      * The height of the Minecraft window.
      */
     height?: number
@@ -131,10 +136,12 @@ export interface Config {
    */
   memory?: {
     /**
+     * [Optional: default is `512`]
      * The minimum memory (RAM), in **MB**, allocated to Minecraft.
      */
     min: number
     /**
+     * [Optional: default is `1023`]
      * The maximum memory (RAM), in **MB**, allocated to Minecraft.
      */
     max: number
